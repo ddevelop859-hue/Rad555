@@ -1,288 +1,347 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Telegram Style Messenger</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.0"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-body { font-family: 'Inter', sans-serif; background-color: #0e1621; color: #f5f5f5; }
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0e1621; }
-::-webkit-scrollbar-thumb { background: #17212b; border-radius: 3px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Style Messenger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.0"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0e1621; color: #f5f5f5; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0e1621; }
+        ::-webkit-scrollbar-thumb { background: #17212b; border-radius: 3px; }
+    </style>
 </head>
 <body class="h-screen w-screen flex flex-col md:flex-row overflow-hidden bg-[#0e1621]">
-<!-- Боковая панель (Список чатов) -->
-<aside class="w-full md:w-80 bg-[#17212b] border-r border-[#0e1621] flex flex-col h-1/3 md:h-full z-10">
-<div class="p-4 border-b border-[#0e1621] flex items-center justify-between">
-<div class="flex items-center space-x-3">
-<div class="w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white shadow-md">
-TG
-</div>
-<div>
-<h1 class="font-semibold text-sm text-slate-100">Telegram Appwrite</h1>
-<span class="text-xs text-emerald-400 flex items-center gap-1">
-<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Онлайн
-</span>
-</div>
-</div>
-</div>
-<div class="p-3">
-<input type="text" placeholder="Поиск..." class="w-full bg-[#242f3d] border border-transparent rounded-xl px-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#5288c1] transition">
-</div>
-<div class="flex-1 overflow-y-auto px-2 space-y-1">
-<div class="flex items-center space-x-3 p-3 rounded-xl bg-[#2b5278]/40 border border-[#5288c1]/30 cursor-pointer transition">
-<div class="w-12 h-12 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-lg font-bold shadow">
-💬
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex justify-between items-baseline">
-<h3 class="font-medium text-sm text-white truncate">Общий чат</h3>
-<span class="text-[10px] text-sky-400">сейчас</span>
-</div>
-<p class="text-xs text-slate-400 truncate">Подключено к базе</p>
-</div>
-</div>
-</div>
-</aside>
-<!-- Основной чат -->
-<main class="flex-1 flex flex-col h-2/3 md:h-full bg-[#0e1621] relative">
-<header class="h-16 bg-[#17212b] border-b border-[#0e1621] px-6 flex items-center justify-between z-10 shadow-sm">
-<div class="flex items-center space-x-3">
-<div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold">
-💬
-</div>
-<div>
-<h2 class="font-semibold text-sm text-slate-100">Общий чат (messages)</h2>
-<span class="text-xs text-emerald-400" id="connection-status">Подключение к базе данных...</span>
-</div>
-</div>
-<div class="flex items-center space-x-2">
-<button onclick="openVoiceModal()" class="bg-[#2b5278]/40 hover:bg-[#2b5278]/70 text-sky-400 border border-[#5288c1]/30 px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5">
-🎙️ Голосовой режим
-</button>
-</div>
-</header>
-<div id="error-banner" class="hidden m-3 p-2 bg-rose-500/20 border border-rose-500 text-rose-300 text-xs rounded-xl text-center"></div>
-<div id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 flex flex-col">
-<!-- Сообщения подгружаются динамически -->
-</div>
-<footer class="p-4 bg-[#17212b] border-t border-[#0e1621]">
-<div class="flex items-center gap-2 max-w-4xl mx-auto">
-<input type="text" id="message-input" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)"
-class="flex-1 bg-[#242f3d] border border-transparent rounded-2xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#5288c1] transition shadow-inner">
-<button onclick="openVoiceModal()" class="bg-[#242f3d] hover:bg-[#182533] text-slate-300 px-3.5 py-3 rounded-2xl transition flex items-center justify-center text-base" title="Голосовое сообщение">
-🎤
-</button>
-<button onclick="sendMessage()" class="bg-[#5288c1] hover:bg-[#4072a7] text-white font-medium px-5 py-3 rounded-2xl transition flex items-center justify-center shadow-lg active:scale-95">
-➤
-</button>
-</div>
-</footer>
-</main>
-<!-- Модальное окно голосового режима (в стиле Telegram) -->
-<div id="voice-modal" class="fixed inset-0 bg-[#0e1621]/90 backdrop-blur-md z-50 flex flex-col items-center justify-between p-6 hidden">
-<div class="w-full max-w-md flex justify-between items-center text-slate-400">
-<span class="text-xs uppercase tracking-widest text-sky-400 font-semibold flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span> Защищенный аудио-канал
-</span>
-<button onclick="closeVoiceModal()" class="p-2 rounded-xl bg-[#17212b] hover:bg-[#242f3d] text-slate-200 transition text-sm">✕ Закрыть</button>
-</div>
-<div class="flex flex-col items-center justify-center space-y-6 my-auto">
-<div class="relative flex items-center justify-center">
-<div class="absolute w-40 h-40 rounded-full bg-[#5288c1]/10 animate-ping"></div>
-<div class="w-32 h-32 rounded-full bg-gradient-to-tr from-[#2b5278] to-indigo-600 flex items-center justify-center text-4xl shadow-2xl border-4 border-[#17212b] z-10">
-🎙️
-</div>
-</div>
-<div class="text-center space-y-1">
-<h3 class="text-xl font-semibold text-white" id="voice-status-title">Голосовой чат</h3>
-<p class="text-xs text-slate-400" id="voice-status-desc">Нажмите кнопку записи для отправки голосового</p>
-<div id="voice-timer" class="text-sm font-mono text-sky-400 hidden">00:00</div>
-</div>
-</div>
-<div class="w-full max-w-sm bg-[#17212b] border border-[#242f3d] p-4 rounded-3xl backdrop-blur flex items-center justify-around shadow-2xl">
-<button onclick="toggleRecordVoiceMessage()" id="record-btn" class="w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-rose-600/30 transition active:scale-95" title="Записать">
-⏺️
-</button>
-</div>
-</div>
-<script>
-// Ваши точные параметры из панели Appwrite
-const PROJECT_ID = '6aafd937003c8bd02759';
-const DATABASE_ID = '6aafdcaa0014b989213e';
-const COLLECTION_ID = 'messages'; // Точное имя таблицы с ваших скриншотов
-const { Client, Databases, ID } = Appwrite;
-let client, databases;
-function initAppwrite() {
-try {
-client = new Client();
-client.setEndpoint('https://fra.cloud.appwrite.io/v1').setProject(PROJECT_ID);
-databases = new Databases(client);
-document.getElementById('connection-status').textContent = 'Подключено к базе';
-loadMessages();
-subscribeToRealtime();
-} catch (e) {
-console.error(e);
-showError('Ошибка инициализации: ' + e.message);
-}
-}
-function showError(text) {
-const banner = document.getElementById('error-banner');
-banner.textContent = text;
-banner.classList.remove('hidden');
-}
-async function loadMessages() {
-const chatBox = document.getElementById('chat-box');
-try {
-const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
-chatBox.innerHTML = '';
-if (response.documents.length === 0) {
-chatBox.innerHTML = '<div class="m-auto text-slate-500 text-sm">Нет сообщений. Напишите первое!</div>';
-return;
-}
-response.documents.forEach(doc => {
-appendMessageToDOM(doc.$id, doc.text);
-});
-} catch (error) {
-console.error('Ошибка загрузки сообщений:', error);
-showError('Ошибка загрузки: ' + error.message);
-}
-}
-function appendMessageToDOM(docId, text) {
-const chatBox = document.getElementById('chat-box');
-const placeholder = chatBox.querySelector('.m-auto');
-if (placeholder) placeholder.remove();
-const msgDiv = document.createElement('div');
-msgDiv.className = 'flex items-end justify-start space-x-2';
-msgDiv.setAttribute('data-id', docId);
-let contentHtml = <p class="text-sm text-slate-100 break-words leading-relaxed">${escapeHtml(text || '')}</p>;
-if (text && text.startsWith('🎤')) {
-contentHtml = <div class="flex items-center space-x-3"> <div class="w-8 h-8 rounded-full bg-[#5288c1] flex items-center justify-center text-white text-xs">▶</div> <div> <p class="text-xs font-medium text-white">${escapeHtml(text)}</p> <div class="w-28 h-1 bg-[#242f3d] rounded-full mt-1 overflow-hidden"> <div class="w-1/2 h-full bg-sky-400 rounded-full"></div> </div> </div> </div>;
-}
-msgDiv.innerHTML = <div class="max-w-[75%] md:max-w-[60%] bg-[#182533] border border-[#242f3d] px-4 py-3 rounded-2xl rounded-bl-sm shadow-md relative group"> ${contentHtml} <button onclick="deleteMessage('${docId}')" class="absolute -top-2 -right-2 bg-rose-600 hover:bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition shadow" title="Удалить"> ✕ </button> </div>;
-chatBox.appendChild(msgDiv);
-chatBox.scrollTop = chatBox.scrollHeight;
-}
-async function sendMessage() {
-const input = document.getElementById('message-input');
-const textValue = input.value.trim();
-if (!textValue) return;
-input.value = '';
-await sendTextToDatabase(textValue);
-}
-async function sendTextToDatabase(textValue) {
-try {
-await databases.createDocument(
-DATABASE_ID,
-COLLECTION_ID,
-ID.unique(),
-{ text: textValue }
-);
-} catch (error) {
-console.error('Ошибка отправки:', error);
-showError('Не удалось отправить: ' + error.message);
-}
-}
-async function deleteMessage(docId) {
-try {
-await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, docId);
-const el = document.querySelector([data-id="${docId}"]);
-if (el) el.remove();
-} catch (error) {
-console.error('Ошибка удаления:', error);
-showError('Не удалось удалить: ' + error.message);
-}
-}
-function handleKeyPress(event) {
-if (event.key === 'Enter') sendMessage();
-}
-function escapeHtml(unsafe) {
-return unsafe
-.replace(/&/g, "&")
-.replace(/</g, "<")
-.replace(/>/g, ">")
-.replace(/"/g, """)
-.replace(/'/g, "'");
-}
-// Голосовой режим ложь/запись
-let isRecording = false;
-let recordSeconds = 0;
-let recordInterval = null;
-function openVoiceModal() {
-document.getElementById('voice-modal').classList.remove('hidden');
-}
-function closeVoiceModal() {
-document.getElementById('voice-modal').classList.add('hidden');
-stopVoiceTimer();
-}
-function toggleRecordVoiceMessage() {
-const btn = document.getElementById('record-btn');
-const statusTitle = document.getElementById('voice-status-title');
-const statusDesc = document.getElementById('voice-status-desc');
-const timerEl = document.getElementById('voice-timer');
-isRecording = !isRecording;
-if (isRecording) {
-btn.textContent = '⏹️';
-btn.className = 'w-16 h-16 rounded-full bg-amber-600 hover:bg-amber-500 text-white flex items-center justify-center text-2xl shadow-lg transition active:scale-95 animate-pulse';
-statusTitle.textContent = 'Идет запись...';
-statusDesc.textContent = 'Говорите в микрофон';
-timerEl.classList.remove('hidden');
-startVoiceTimer();
-} else {
-btn.textContent = '⏺️';
-btn.className = 'w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center text-2xl shadow-lg transition active:scale-95';
-statusTitle.textContent = 'Отправка...';
-stopVoiceTimer();
-setTimeout(() => {
-const voiceText = 🎤 [Голосовое сообщение (${formatTime(recordSeconds)})];
-sendTextToDatabase(voiceText);
-closeVoiceModal();
-statusTitle.textContent = 'Голосовой чат';
-statusDesc.textContent = 'Нажмите кнопку записи для отправки голосового';
-}, 800);
-}
-}
-function startVoiceTimer() {
-recordSeconds = 0;
-const timerEl = document.getElementById('voice-timer');
-timerEl.textContent = '00:00';
-recordInterval = setInterval(() => {
-recordSeconds++;
-timerEl.textContent = formatTime(recordSeconds);
-}, 1000);
-}
-function stopVoiceTimer() {
-if (recordInterval) clearInterval(recordInterval);
-isRecording = false;
-document.getElementById('voice-timer').classList.add('hidden');
-}
-function formatTime(totalSecs) {
-const mins = Math.floor(totalSecs / 60).toString().padStart(2, '0');
-const secs = (totalSecs % 60).toString().padStart(2, '0');
-return ${mins}:${secs};
-}
-function subscribeToRealtime() {
-try {
-client.subscribe(
-databases.${DATABASE_ID}.collections.${COLLECTION_ID}.documents,
-response => {
-if (response.events.includes("databases..collections..documents..create")) {
-appendMessageToDOM(response.payload.$id, response.payload.text);
-} else if (response.events.includes("databases..collections..documents..delete")) {
-const el = document.querySelector([data-id="${response.payload.$id}"]);
-if (el) el.remove();
-}
-}
-);
-} catch (e) {
-console.error("Realtime error:", e);
-}
-}
-window.onload = initAppwrite;
-</script>
+
+    <!-- Боковая панель (Список чатов) -->
+    <aside class="w-full md:w-80 bg-[#17212b] border-r border-[#0e1621] flex flex-col h-1/3 md:h-full z-10">
+        <div class="p-4 border-b border-[#0e1621] flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white shadow-md">
+                    TG
+                </div>
+                <div>
+                    <h1 class="font-semibold text-sm text-slate-100">Telegram Appwrite</h1>
+                    <span class="text-xs text-emerald-400 flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Онлайн
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-3">
+            <input type="text" placeholder="Поиск..." class="w-full bg-[#242f3d] border border-transparent rounded-xl px-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#5288c1] transition">
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-2 space-y-1">
+            <div class="flex items-center space-x-3 p-3 rounded-xl bg-[#2b5278]/40 border border-[#5288c1]/30 cursor-pointer transition">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-lg font-bold shadow">
+                    💬
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-baseline">
+                        <h3 class="font-medium text-sm text-white truncate">Общий чат</h3>
+                        <span class="text-[10px] text-sky-400">сейчас</span>
+                    </div>
+                    <p class="text-xs text-slate-400 truncate">Подключено к базе</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Основной чат -->
+    <main class="flex-1 flex flex-col h-2/3 md:h-full bg-[#0e1621] relative min-w-0">
+        <header class="h-16 bg-[#17212b] border-b border-[#0e1621] px-6 flex items-center justify-between z-10 shadow-sm">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold">
+                    💬
+                </div>
+                <div>
+                    <h2 class="font-semibold text-sm text-slate-100">Общий чат (messages)</h2>
+                    <span class="text-xs text-emerald-400" id="connection-status">Подключение к базе данных...</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="openVoiceModal()" class="bg-[#2b5278]/40 hover:bg-[#2b5278]/70 text-sky-400 border border-[#5288c1]/30 px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5">
+                    🎙️ Голосовой режим
+                </button>
+            </div>
+        </header>
+
+        <div id="error-banner" class="hidden m-3 p-2 bg-rose-500/20 border border-rose-500 text-rose-300 text-xs rounded-xl text-center"></div>
+
+        <div id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 flex flex-col overflow-x-hidden">
+            <!-- Сообщения подгружаются динамически -->
+        </div>
+
+        <footer class="p-4 bg-[#17212b] border-t border-[#0e1621]">
+            <div class="flex items-center gap-2 max-w-4xl mx-auto">
+                <input type="text" id="message-input" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)"
+                    class="flex-1 bg-[#242f3d] border border-transparent rounded-2xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#5288c1] transition shadow-inner min-w-0">
+                <button onclick="openVoiceModal()" class="bg-[#242f3d] hover:bg-[#182533] text-slate-300 px-3.5 py-3 rounded-2xl transition flex items-center justify-center text-base shrink-0" title="Голосовое сообщение">
+                    🎤
+                </button>
+                <button onclick="sendMessage()" class="bg-[#5288c1] hover:bg-[#4072a7] text-white font-medium px-5 py-3 rounded-2xl transition flex items-center justify-center shadow-lg active:scale-95 shrink-0">
+                    ➤
+                </button>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Модальное окно голосового режима (в темном стиле Telegram) -->
+    <div id="voice-modal" class="fixed inset-0 bg-[#0e1621]/95 backdrop-blur-md z-50 flex flex-col items-center justify-between p-6 hidden">
+        <div class="w-full max-w-md flex justify-between items-center text-slate-400">
+            <span class="text-xs uppercase tracking-widest text-sky-400 font-semibold flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span> Защищенный аудио-канал
+            </span>
+            <button onclick="closeVoiceModal()" class="p-2 rounded-xl bg-[#17212b] hover:bg-[#242f3d] text-slate-200 transition text-sm">✕ Закрыть</button>
+        </div>
+
+        <div class="flex flex-col items-center justify-center space-y-6 my-auto">
+            <div class="relative flex items-center justify-center">
+                <div class="absolute w-40 h-40 rounded-full bg-[#5288c1]/10 animate-ping"></div>
+                <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-[#2b5278] to-indigo-600 flex items-center justify-center text-4xl shadow-2xl border-4 border-[#17212b] z-10">
+                    🎙️
+                </div>
+            </div>
+            <div class="text-center space-y-1">
+                <h3 class="text-xl font-semibold text-white" id="voice-status-title">Голосовой чат</h3>
+                <p class="text-xs text-slate-400" id="voice-status-desc">Нажмите кнопку записи для отправки голосового</p>
+                <div id="voice-timer" class="text-sm font-mono text-sky-400 hidden">00:00</div>
+            </div>
+        </div>
+
+        <div class="w-full max-w-sm bg-[#17212b] border border-[#242f3d] p-4 rounded-3xl backdrop-blur flex items-center justify-around shadow-2xl">
+            <button onclick="toggleRecordVoiceMessage()" id="record-btn" class="w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-rose-600/30 transition active:scale-95" title="Записать">
+                ⏺️
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Ваши точные параметры Appwrite (Франкфуртский эндпоинт + правильная таблица messages)
+        const PROJECT_ID = '6aafd937003c8bd02759';
+        const DATABASE_ID = '6aafdcaa0014b989213e';
+        const COLLECTION_ID = 'messages'; 
+
+        const { Client, Databases, ID } = Appwrite;
+        let client, databases;
+
+        function initAppwrite() {
+            try {
+                client = new Client();
+                client.setEndpoint('https://fra.cloud.appwrite.io/v1').setProject(PROJECT_ID);
+                databases = new Databases(client);
+                document.getElementById('connection-status').textContent = 'Подключено к базе';
+                loadMessages();
+                subscribeToRealtime();
+            } catch (e) {
+                console.error(e);
+                showError('Ошибка инициализации: ' + e.message);
+            }
+        }
+
+        function showError(text) {
+            const banner = document.getElementById('error-banner');
+            banner.textContent = text;
+            banner.classList.remove('hidden');
+        }
+
+        async function loadMessages() {
+            const chatBox = document.getElementById('chat-box');
+            try {
+                const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
+                chatBox.innerHTML = '';
+                
+                if (response.documents.length === 0) {
+                    chatBox.innerHTML = '<div class="m-auto text-slate-500 text-sm">Нет сообщений. Напишите первое!</div>';
+                    return;
+                }
+
+                response.documents.forEach(doc => {
+                    appendMessageToDOM(doc.$id, doc.text);
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки сообщений:', error);
+                showError('Ошибка загрузки: ' + error.message);
+            }
+        }
+
+        function appendMessageToDOM(docId, text) {
+            const chatBox = document.getElementById('chat-box');
+            const placeholder = chatBox.querySelector('.m-auto');
+            if (placeholder) placeholder.remove();
+
+            // Предотвращаем дублирование элемента, если он уже есть в DOM
+            if (document.querySelector(`[data-id="${docId}"]`)) return;
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'flex items-end justify-start space-x-2 w-full max-w-full';
+            msgDiv.setAttribute('data-id', docId);
+
+            let contentHtml = `<p class="text-sm text-slate-100 break-words leading-relaxed whitespace-pre-wrap">${escapeHtml(text || '')}</p>`;
+            if (text && text.includes('🎤')) {
+                contentHtml = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-[#5288c1] flex items-center justify-center text-white text-xs shrink-0">▶</div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-medium text-white truncate">${escapeHtml(text)}</p>
+                            <div class="w-28 h-1 bg-[#242f3d] rounded-full mt-1 overflow-hidden">
+                                <div class="w-1/2 h-full bg-sky-400 rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            msgDiv.innerHTML = `
+                <div class="max-w-[85%] md:max-w-[65%] bg-[#182533] border border-[#242f3d] px-4 py-3 rounded-2xl rounded-bl-sm shadow-md relative group overflow-hidden">
+                    ${contentHtml}
+                    <button onclick="deleteMessage('${docId}')" class="absolute -top-2 -right-2 bg-rose-600 hover:bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition shadow z-10" title="Удалить">
+                        ✕
+                    </button>
+                </div>
+            `;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const textValue = input.value.trim();
+            if (!textValue) return;
+
+            input.value = '';
+            await sendTextToDatabase(textValue);
+        }
+
+        async function sendTextToDatabase(textValue) {
+            try {
+                await databases.createDocument(
+                    DATABASE_ID,
+                    COLLECTION_ID,
+                    ID.unique(),
+                    { text: textValue }
+                );
+            } catch (error) {
+                console.error('Ошибка отправки:', error);
+                showError('Не удалось отправить: ' + error.message);
+            }
+        }
+
+        async function deleteMessage(docId) {
+            try {
+                await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, docId);
+                const el = document.querySelector(`[data-id="${docId}"]`);
+                if (el) el.remove();
+            } catch (error) {
+                console.error('Ошибка удаления:', error);
+                showError('Не удалось удалить: ' + error.message);
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') sendMessage();
+        }
+
+        function escapeHtml(unsafe) {
+            return (unsafe || '')
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+
+        // Логика голосового режима
+        let isRecording = false;
+        let recordSeconds = 0;
+        let recordInterval = null;
+
+        function openVoiceModal() {
+            document.getElementById('voice-modal').classList.remove('hidden');
+        }
+
+        function closeVoiceModal() {
+            document.getElementById('voice-modal').classList.add('hidden');
+            stopVoiceTimer();
+        }
+
+        function toggleRecordVoiceMessage() {
+            const btn = document.getElementById('record-btn');
+            const statusTitle = document.getElementById('voice-status-title');
+            const statusDesc = document.getElementById('voice-status-desc');
+            const timerEl = document.getElementById('voice-timer');
+
+            isRecording = !isRecording;
+            if (isRecording) {
+                btn.textContent = '⏹️';
+                btn.className = 'w-16 h-16 rounded-full bg-amber-600 hover:bg-amber-500 text-white flex items-center justify-center text-2xl shadow-lg transition active:scale-95 animate-pulse';
+                statusTitle.textContent = 'Идет запись...';
+                statusDesc.textContent = 'Говорите в микрофон';
+                timerEl.classList.remove('hidden');
+                startVoiceTimer();
+            } else {
+                btn.textContent = '⏺️';
+                btn.className = 'w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center text-2xl shadow-lg transition active:scale-95';
+                statusTitle.textContent = 'Отправка...';
+                stopVoiceTimer();
+
+                setTimeout(() => {
+                    const voiceText = `🎤 [Голосовое сообщение (${formatTime(recordSeconds)})]`;
+                    sendTextToDatabase(voiceText);
+                    closeVoiceModal();
+                    statusTitle.textContent = 'Голосовой чат';
+                    statusDesc.textContent = 'Нажмите кнопку записи для отправки голосового';
+                }, 800);
+            }
+        }
+
+        function startVoiceTimer() {
+            recordSeconds = 0;
+            const timerEl = document.getElementById('voice-timer');
+            timerEl.textContent = '00:00';
+            recordInterval = setInterval(() => {
+                recordSeconds++;
+                timerEl.textContent = formatTime(recordSeconds);
+            }, 1000);
+        }
+
+        function stopVoiceTimer() {
+            if (recordInterval) clearInterval(recordInterval);
+            isRecording = false;
+            document.getElementById('voice-timer').classList.add('hidden');
+        }
+
+        function formatTime(totalSecs) {
+            const mins = Math.floor(totalSecs / 60).toString().padStart(2, '0');
+            const secs = (totalSecs % 60).toString().padStart(2, '0');
+            return `${mins}:${secs}`;
+        }
+
+        function subscribeToRealtime() {
+            try {
+                client.subscribe(
+                    `databases.${DATABASE_ID}.collections.${COLLECTION_ID}.documents`,
+                    response => {
+                        if (response.events.some(event => event.includes(".create"))) {
+                            appendMessageToDOM(response.payload.$id, response.payload.text);
+                        } else if (response.events.some(event => event.includes(".delete"))) {
+                            const el = document.querySelector(`[data-id="${response.payload.$id}"]`);
+                            if (el) el.remove();
+                        }
+                    }
+                );
+            } catch (e) {
+                console.error("Realtime error:", e);
+            }
+        }
+
+        window.onload = initAppwrite;
+    </script>
 </body>
 </html>
+
