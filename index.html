@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telegram Style Appwrite Chat & Voice</title>
-    <!-- Tailwind CSS for modern responsive styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Appwrite Web SDK -->
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.0"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
-        /* Custom scrollbar matching Telegram dark theme */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
@@ -19,14 +16,13 @@
         @keyframes pulse-slow {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.6; transform: scale(1.05); }
+        }
         .animate-pulse-slow { animation: pulse-slow 2s infinite ease-in-out; }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col md:flex-row overflow-hidden bg-slate-950">
 
-    <!-- Sidebar / Chat List (Telegram Desktop Style) -->
     <aside class="w-full md:w-80 bg-slate-900 border-r border-slate-800 flex flex-col h-1/3 md:h-full z-10">
-        <!-- Sidebar Header -->
         <div class="p-4 border-b border-slate-800 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-full bg-sky-600 flex items-center justify-center font-bold text-white shadow-md">
@@ -49,12 +45,10 @@
             </div>
         </div>
 
-        <!-- Chat List Filter / Search -->
         <div class="p-3">
             <input type="text" placeholder="Поиск..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 transition">
         </div>
 
-        <!-- Chats Channel List -->
         <div class="flex-1 overflow-y-auto px-2 space-y-1">
             <div onclick="switchChat('general')" id="chat-item-general" class="flex items-center space-x-3 p-3 rounded-xl bg-sky-600/20 border border-sky-500/30 cursor-pointer transition">
                 <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-lg font-bold shadow">
@@ -71,9 +65,7 @@
         </div>
     </aside>
 
-    <!-- Main Chat Window -->
     <main class="flex-1 flex flex-col h-2/3 md:h-full bg-slate-950 relative">
-        <!-- Chat Header -->
         <header class="h-16 bg-slate-900 border-b border-slate-800 px-6 flex items-center justify-between z-10 shadow-sm">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold">
@@ -94,12 +86,10 @@
             </div>
         </header>
 
-        <!-- Messages Stream Container -->
         <div id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 flex flex-col">
-            <!-- Dynamic message bubbles will be injected here -->
+            <!-- Dynamic messages injected here -->
         </div>
 
-        <!-- Input Panel Footer -->
         <footer class="p-4 bg-slate-900 border-t border-slate-800">
             <div id="error-banner" class="hidden mb-2 p-2 bg-rose-500/20 border border-rose-500 text-rose-300 text-xs rounded-xl text-center"></div>
             <div class="flex items-center gap-2 max-w-4xl mx-auto">
@@ -115,9 +105,7 @@
         </footer>
     </main>
 
-    <!-- Telegram Voice Call / Voice Message Modal -->
     <div id="voice-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex flex-col items-center justify-between p-6 hidden">
-        <!-- Top bar -->
         <div class="w-full max-w-md flex justify-between items-center text-slate-400">
             <span class="text-xs uppercase tracking-widest text-sky-400 font-semibold flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span> Защищенный аудио-канал
@@ -125,7 +113,6 @@
             <button onclick="closeVoiceModal()" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 transition text-sm">✕ Закрыть</button>
         </div>
 
-        <!-- Center Visualizer & Status -->
         <div class="flex flex-col items-center justify-center space-y-6 my-auto">
             <div class="relative flex items-center justify-center">
                 <div class="absolute w-40 h-40 rounded-full bg-sky-500/10 animate-ping"></div>
@@ -141,7 +128,6 @@
             </div>
         </div>
 
-        <!-- Voice Call Controls -->
         <div class="w-full max-w-sm bg-slate-900/80 border border-slate-800 p-4 rounded-3xl backdrop-blur flex items-center justify-around shadow-2xl">
             <button onclick="toggleMuteAudio()" id="mute-btn" class="w-12 h-12 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center text-lg transition" title="Вкл/Выкл микрофон">
                 🔊
@@ -155,11 +141,10 @@
         </div>
     </div>
 
-    <!-- App Settings / Config Modal -->
     <div id="settings-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
             <h3 class="text-lg font-semibold text-white">Настройки подключения Appwrite</h3>
-            <p class="text-xs text-slate-400">Проверьте или измените конфигурационные параметры вашего проекта.</p>
+            <p class="text-xs text-slate-400">Параметры вашего проекта.</p>
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">Project ID</label>
@@ -181,7 +166,6 @@
         </div>
     </div>
 
-    <!-- Custom Notification/Modal Box (No alert/confirm) -->
     <div id="custom-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4 text-center">
             <div id="modal-icon" class="text-3xl">⚠️</div>
@@ -191,7 +175,6 @@
     </div>
 
     <script>
-        // Configuration storage or defaults
         let PROJECT_ID = localStorage.getItem('appwrite_project') || '6aafd937003c8bd02759';
         let DATABASE_ID = localStorage.getItem('appwrite_database') || 'ProductionTablesDB';
         let COLLECTION_ID = localStorage.getItem('appwrite_collection') || '6aafdcfe00022f833302';
@@ -250,7 +233,6 @@
             subscribeToRealtime();
         }
 
-        // Voice Mode Handler state
         let isRecording = false;
         let recordSeconds = 0;
         let recordInterval = null;
@@ -295,7 +277,6 @@
                 statusDesc.textContent = 'Готово!';
                 stopVoiceTimer();
 
-                // Send a simulated voice message tag to Appwrite
                 setTimeout(() => {
                     const voiceText = `🎤 [Голосовое сообщение (${formatTime(recordSeconds)})]`;
                     sendTextMessageToDatabase(voiceText);
@@ -359,8 +340,6 @@
 
         function appendMessageToDOM(docId, text, createdAt) {
             const chatBox = document.getElementById('chat-box');
-            
-            // Remove empty state placeholder if exists
             const placeholder = chatBox.querySelector('.m-auto');
             if (placeholder) placeholder.remove();
 
@@ -394,7 +373,6 @@
                     <div class="flex items-center justify-end space-x-1 mt-1">
                         <span class="text-[10px] text-slate-500">${timeStr}</span>
                     </div>
-                    <!-- Delete button appearing on hover -->
                     <button onclick="deleteMessage('${docId}')" class="absolute -top-2 -right-2 bg-rose-600 hover:bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition shadow" title="Удалить сообщение">
                         ✕
                     </button>
@@ -483,7 +461,6 @@
             }
         }
 
-        // Initial launch
         window.onload = function() {
             loadMessages();
             subscribeToRealtime();
