@@ -3,183 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Чат Appwrite</title>
-    <!-- Подключаем SDK Appwrite -->
+    <title>Space Chat - Appwrite</title>
+    <!-- Подключаем библиотеку Appwrite -->
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
     <style>
-        body {
-            font-family: sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
-            display: flex;
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        body { 
+            background-color: #0b0c10; 
+            color: #c5c6c7; 
+            height: 100vh; 
+            display: flex; 
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(69, 162, 158, 0.1), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(102, 252, 241, 0.1), transparent 25%);
         }
-        #chat-container {
-            width: 100%;
-            max-width: 400px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            height: 80vh;
+
+        .app-container { 
+            display: flex; 
+            width: 100%; 
+            height: 100%; 
+            max-width: 1400px; 
+            background: rgba(11, 12, 16, 0.8);
+            box-shadow: 0 0 30px rgba(0,0,0,0.8); 
         }
-        header {
-            background: #f02e65;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
+
+        .sidebar { 
+            width: 320px; 
+            background: #12141a; 
+            border-right: 1px solid rgba(69, 162, 158, 0.2); 
+            display: flex; 
+            flex-direction: column; 
         }
-        #chat-box {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        
+        .sidebar-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(69, 162, 158, 0.2); }
+        .logo { font-size: 1.2em; color: #66fcf1; font-weight: bold; }
+        .contact-list { flex-grow: 1; overflow-y: auto; }
+        
+        .contact { padding: 15px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .contact.active { background: rgba(69, 162, 158, 0.15); border-left: 4px solid #66fcf1; }
+        
+        .avatar { 
+            width: 48px; height: 48px; border-radius: 50%; 
+            background: linear-gradient(135deg, #45a29e, #1f2833); 
+            display: flex; align-items: center; justify-content: center; 
+            color: #fff; font-weight: bold; font-size: 1.2em;
         }
-        .msg {
-            background: #e1e1e1;
-            padding: 10px;
-            border-radius: 5px;
-            align-self: flex-start;
-            word-break: break-word;
+
+        .contact-info { display: flex; flex-direction: column; flex-grow: 1; }
+        .contact-name { color: #fff; font-weight: 500; font-size: 1.1em; }
+        .contact-status { font-size: 0.85em; color: #66fcf1; }
+
+        .chat-area { flex-grow: 1; display: flex; flex-direction: column; background: #0b0c10; }
+        .chat-header { padding: 15px 25px; background: #12141a; border-bottom: 1px solid rgba(69, 162, 158, 0.2); display: flex; align-items: center; gap: 15px; }
+
+        .messages-container { 
+            flex-grow: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; 
+            background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 4px), radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 3px);
+            background-size: 550px 550px, 350px 350px; background-position: 0 0, 40px 60px;
         }
-        .input-area {
-            display: flex;
-            padding: 10px;
-            border-top: 1px solid #ddd;
+        
+        .msg-wrapper { display: flex; flex-direction: column; width: 100%; }
+        .msg { max-width: 65%; padding: 14px 20px; border-radius: 18px; line-height: 1.5; font-size: 1.05em; word-wrap: break-word; }
+        .msg.received { background: #1f2833; color: #e0e0e0; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(69, 162, 158, 0.3); }
+        .msg.sent { background: #45a29e; color: #0b0c10; align-self: flex-end; border-bottom-right-radius: 4px; }
+        
+        .input-area { padding: 20px 30px; background: #12141a; display: flex; gap: 15px; border-top: 1px solid rgba(69, 162, 158, 0.2); align-items: center; }
+        .input-wrapper { flex-grow: 1; }
+        .input-area input { width: 100%; padding: 16px 25px; border-radius: 30px; border: 1px solid #1f2833; background: #0b0c10; color: #fff; font-size: 1.05em; outline: none; }
+        .input-area input:focus { border-color: #45a29e; }
+        
+        .send-btn { 
+            width: 55px; height: 55px; border-radius: 50%; border: none; background: #66fcf1; color: #0b0c10; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; 
         }
-        #msg-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            outline: none;
-            font-size: 16px;
-        }
-        #send-btn {
-            background: #f02e65;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            margin-left: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        #send-btn:hover {
-            background: #d02656;
-        }
+        .send-icon { width: 24px; height: 24px; fill: currentColor; margin-left: 3px; }
+
+        @media (max-width: 768px) { .sidebar { display: none; } }
     </style>
 </head>
 <body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">🚀 DeepSpace Chat</div>
+            </div>
+            <div class="contact-list">
+                <div class="contact active">
+                    <div class="avatar">GC</div>
+                    <div class="contact-info">
+                        <div class="contact-name">Общий чат</div>
+                        <div class="contact-status">В сети</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <div id="chat-container">
-        <header id="status">Чат (Подключение...)</header>
-        
-        <div id="chat-box"></div>
-        
-        <div class="input-area">
-            <input type="text" id="msg-input" placeholder="Введите сообщение...">
-            <button id="send-btn">Отправить</button>
+        <div class="chat-area">
+            <div class="chat-header">
+                <div class="avatar">GC</div>
+                <div class="contact-info">
+                    <div class="contact-name">Общий чат (Appwrite)</div>
+                    <div class="contact-status" id="status-text">Подключение...</div>
+                </div>
+            </div>
+            
+            <div class="messages-container" id="chat-messages">
+                <!-- Сообщения -->
+            </div>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <input type="text" id="message-input" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)">
+                </div>
+                <button class="send-btn" onclick="sendMessage()">
+                    <svg class="send-icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        const { Client, Databases, ID, Query } = Appwrite;
-
-        // 1. Инициализация клиента Appwrite
-        const client = new Client()
+        const client = new Appwrite.Client();
+        
+        client
             .setEndpoint('https://cloud.appwrite.io/v1') 
-            .setProject('6aaf4450002b67541724');
+            .setProject('6aaf458600227e110ffa'); // Твой Project ID уже здесь
+            
+        const databases = new Appwrite.Databases(client);
+        
+        // ВНИМАНИЕ: Если при отправке будет ошибка, значит ID базы другой.
+        // Замени 'Production_TablesDB' на буквенно-цифровой ID базы данных из панели Appwrite.
+        const DATABASE_ID = 'Production_TablesDB';     
+        const COLLECTION_ID = '64af45d3000a0a7a6764'; // Твой ID коллекции meesages
 
-        const databases = new Databases(client);
-
-        const dbId = '6aaf458600227e110ffa'; 
-        // ВНИМАНИЕ: Убедитесь, что colId указан полностью!
-        const colId = '6aaf45d3000ae6002b75'; 
-
-        const chatBox = document.getElementById('chat-box');
-        const msgInput = document.getElementById('msg-input');
-        const sendBtn = document.getElementById('send-btn');
-        const status = document.getElementById('status');
-
-        // Функция добавления сообщения в интерфейс
-        function addMessageToDOM(text) {
-            const div = document.createElement('div');
-            div.className = 'msg';
-            div.textContent = text;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        // 2. Загрузка старых сообщений из базы данных
         async function loadMessages() {
             try {
-                const response = await databases.listDocuments(
-                    dbId, 
-                    colId,
-                    [
-                        Query.orderDesc('$createdAt'),
-                        Query.limit(50)
-                    ]
-                );
+                const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
+                document.getElementById('status-text').innerText = 'Подключено';
                 
-                chatBox.innerHTML = '';
+                const container = document.getElementById('chat-messages');
+                container.innerHTML = ''; 
                 
-                // Переворачиваем массив, чтобы новые сообщения были внизу
-                response.documents.reverse().forEach(doc => {
-                    addMessageToDOM(doc.text);
+                response.documents.forEach(doc => {
+                    displayMessage(doc.text, 'received'); 
                 });
-                
-                status.textContent = 'Чат (В сети)';
             } catch (error) {
-                console.error('Ошибка загрузки:', error);
-                status.textContent = 'Ошибка загрузки. Проверьте ID и права.';
+                console.error("Ошибка загрузки:", error);
+                document.getElementById('status-text').innerText = 'Ошибка подключения к базе';
             }
         }
 
-        // 3. Отправка нового сообщения
         async function sendMessage() {
-            const text = msgInput.value.trim();
-            if (!text) return;
+            const input = document.getElementById('message-input');
+            const messageText = input.value.trim();
             
-            msgInput.value = ''; 
-            
-            try {
-                await databases.createDocument(
-                    dbId, 
-                    colId, 
-                    ID.unique(), 
-                    { text: text }
-                );
-            } catch (error) {
-                console.error('Ошибка отправки:', error);
-                alert('Не удалось отправить сообщение. Проверьте права доступа в Appwrite.');
+            if (messageText !== "") {
+                input.value = ''; 
+                displayMessage(messageText, 'sent');
+                
+                try {
+                    await databases.createDocument(
+                        DATABASE_ID, 
+                        COLLECTION_ID, 
+                        Appwrite.ID.unique(), 
+                        { text: messageText } 
+                    );
+                } catch (error) {
+                    console.error("Ошибка отправки:", error);
+                    alert("Ошибка отправки. Либо нет колонки 'text', либо неверный Database ID, либо не настроены права Create.");
+                }
             }
         }
 
-        // Обработка клика по кнопке и нажатия Enter
-        sendBtn.addEventListener('click', sendMessage);
-        msgInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') sendMessage();
-        });
+        function displayMessage(text, type) {
+            if(!text) return;
+            const container = document.getElementById('chat-messages');
+            const wrapper = document.createElement('div');
+            wrapper.className = 'msg-wrapper';
+            
+            const msg = document.createElement('div');
+            msg.className = 'msg ' + type;
+            msg.innerText = text;
+            
+            wrapper.appendChild(msg);
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight; 
+        }
 
-        // 4. Подписка на обновления в реальном времени (Realtime)
-        client.subscribe(`databases.${dbId}.collections.${colId}.documents`, response => {
-            if (response.events.includes('databases.*.collections.*.documents.*.create')) {
-                addMessageToDOM(response.payload.text);
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') sendMessage();
+        }
+
+        client.subscribe(`databases.${DATABASE_ID}.collections.${COLLECTION_ID}.documents`, response => {
+            if(response.events.includes("databases.*.collections.*.documents.*.create")) {
+                displayMessage(response.payload.text, 'received');
             }
         });
 
-        // Запуск загрузки сообщений при старте
         loadMessages();
     </script>
 </body>
