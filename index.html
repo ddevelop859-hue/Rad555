@@ -45,7 +45,7 @@
                         <h3 class="font-medium text-sm text-white truncate">Общий чат</h3>
                         <span class="text-[10px] text-sky-400">сейчас</span>
                     </div>
-                    <p class="text-xs text-slate-400 truncate">Все сообщения и голосовые</p>
+                    <p class="text-xs text-slate-400 truncate">Текст и голосовые вместе</p>
                 </div>
             </div>
         </div>
@@ -83,7 +83,7 @@
                 </button>
             </div>
             <div id="voice-status-bar" class="text-xs text-center text-rose-400 mt-2 hidden">
-                🔴 Идет запись голоса... <span id="voice-timer" class="font-mono">00:00</span> (нажмите на ⏹ чтобы остановить и отправить)
+                🔴 Идет запись голоса с микрофона... <span id="voice-timer" class="font-mono">00:00</span> (нажмите на ⏹ чтобы остановить и отправить)
             </div>
         </footer>
     </main>
@@ -150,16 +150,11 @@
             let contentHtml = '';
             const cleanText = text || '';
 
-            if (cleanText.includes('🎤 [Голосовое')) {
+            if (cleanText.startsWith('AUDIO:')) {
+                const audioUrl = cleanText.replace('AUDIO:', '');
                 contentHtml = `
                     <div class="flex items-center space-x-3 py-1">
-                        <div class="w-9 h-9 rounded-full bg-[#5288c1] flex items-center justify-center text-white text-sm shrink-0 shadow cursor-pointer">▶</div>
-                        <div class="min-w-0 flex-1">
-                            <p class="text-xs font-medium text-white truncate">${escapeHtml(cleanText)}</p>
-                            <div class="w-32 h-1.5 bg-[#242f3d] rounded-full mt-1.5 overflow-hidden">
-                                <div class="w-3/4 h-full bg-sky-400 rounded-full animate-pulse"></div>
-                            </div>
-                        </div>
+                        <audio controls src="${escapeHtml(audioUrl)}" class="w-48 h-8"></audio>
                     </div>
                 `;
             } else {
@@ -226,27 +221,49 @@
         }
 
         let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
         let recordSeconds = 0;
         let recordInterval = null;
 
-        function toggleRecordVoiceMessage() {
+        async function toggleRecordVoiceMessage() {
             const btn = document.getElementById('record-btn');
             const statusBar = document.getElementById('voice-status-bar');
 
-            isRecording = !isRecording;
-            if (isRecording) {
-                btn.textContent = '⏹️';
-                btn.className = 'bg-rose-600 hover:bg-rose-500 text-white w-12 h-12 rounded-2xl transition flex items-center justify-center text-lg shadow-lg shrink-0 animate-pulse';
-                statusBar.classList.remove('hidden');
-                startVoiceTimer();
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        await sendTextToDatabase('AUDIO:' + audioUrl);
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    btn.textContent = '⏹️';
+                    btn.className = 'bg-rose-600 hover:bg-rose-500 text-white w-12 h-12 rounded-2xl transition flex items-center justify-center text-lg shadow-lg shrink-0 animate-pulse';
+                    statusBar.classList.remove('hidden');
+                    startVoiceTimer();
+                } catch (e) {
+                    showError('Нет доступа к микрофону: ' + e.message);
+                }
             } else {
+                if (mediaRecorder) {
+                    mediaRecorder.stop();
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
                 btn.textContent = '🎤';
                 btn.className = 'bg-[#242f3d] hover:bg-[#182533] text-slate-300 w-12 h-12 rounded-2xl transition flex items-center justify-center text-lg shrink-0';
                 stopVoiceTimer();
                 statusBar.classList.add('hidden');
-
-                const voiceText = `🎤 [Голосовое сообщение (${formatTime(recordSeconds)})]`;
-                sendTextToDatabase(voiceText);
             }
         }
 
