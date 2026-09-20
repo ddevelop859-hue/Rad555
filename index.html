@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Style Messenger</title>
+    <title>Telegram Messenger</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.0"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0e1621; color: #f5f5f5; }
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #0e1621; }
         ::-webkit-scrollbar-thumb { background: #17212b; border-radius: 3px; }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col md:flex-row overflow-hidden bg-[#0e1621]">
 
-    <!-- Боковая панель (Список чатов) -->
-    <aside class="w-full md:w-80 bg-[#17212b] border-r border-[#0e1621] flex flex-col h-1/3 md:h-full z-10">
+    <!-- Боковая панель -->
+    <aside class="hidden md:flex w-80 bg-[#17212b] border-r border-[#0e1621] flex-col h-full z-10 shrink-0">
         <div class="p-4 border-b border-[#0e1621] flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white shadow-md">
@@ -46,83 +46,55 @@
                         <h3 class="font-medium text-sm text-white truncate">Общий чат</h3>
                         <span class="text-[10px] text-sky-400">сейчас</span>
                     </div>
-                    <p class="text-xs text-slate-400 truncate">Подключено к базе</p>
+                    <p class="text-xs text-slate-400 truncate">Текст и голосовые в одном потоке</p>
                 </div>
             </div>
         </div>
     </aside>
 
     <!-- Основной чат -->
-    <main class="flex-1 flex flex-col h-2/3 md:h-full bg-[#0e1621] relative min-w-0">
-        <header class="h-16 bg-[#17212b] border-b border-[#0e1621] px-6 flex items-center justify-between z-10 shadow-sm">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold">
+    <main class="flex-1 flex flex-col h-full bg-[#0e1621] relative min-w-0 overflow-hidden">
+        <header class="h-16 bg-[#17212b] border-b border-[#0e1621] px-4 md:px-6 flex items-center justify-between z-10 shrink-0 shadow-sm">
+            <div class="flex items-center space-x-3 min-w-0">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold shrink-0">
                     💬
                 </div>
-                <div>
-                    <h2 class="font-semibold text-sm text-slate-100">Общий чат (messages)</h2>
-                    <span class="text-xs text-emerald-400" id="connection-status">Подключение к базе данных...</span>
+                <div class="min-w-0">
+                    <h2 class="font-semibold text-sm text-slate-100 truncate">Общий чат (messages)</h2>
+                    <span class="text-xs text-emerald-400" id="connection-status">Подключение к базе...</span>
                 </div>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button onclick="openVoiceModal()" class="bg-[#2b5278]/40 hover:bg-[#2b5278]/70 text-sky-400 border border-[#5288c1]/30 px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5">
-                    🎙️ Голосовой режим
-                </button>
             </div>
         </header>
 
-        <div id="error-banner" class="hidden m-3 p-2 bg-rose-500/20 border border-rose-500 text-rose-300 text-xs rounded-xl text-center"></div>
+        <div id="error-banner" class="hidden m-3 p-2 bg-rose-500/20 border border-rose-500 text-rose-300 text-xs rounded-xl text-center shrink-0"></div>
 
-        <div id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 flex flex-col overflow-x-hidden">
+        <!-- Контейнер сообщений: единая лента для текста и голосовых, защита от переполнения -->
+        <div id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 flex flex-col min-w-0 overflow-x-hidden">
             <!-- Сообщения подгружаются динамически -->
         </div>
 
-        <footer class="p-4 bg-[#17212b] border-t border-[#0e1621]">
+        <!-- Поле ввода: единый поток для текста и голосовых -->
+        <footer class="p-3 md:p-4 bg-[#17212b] border-t border-[#0e1621] shrink-0">
             <div class="flex items-center gap-2 max-w-4xl mx-auto">
                 <input type="text" id="message-input" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)"
                     class="flex-1 bg-[#242f3d] border border-transparent rounded-2xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#5288c1] transition shadow-inner min-w-0">
-                <button onclick="openVoiceModal()" class="bg-[#242f3d] hover:bg-[#182533] text-slate-300 px-3.5 py-3 rounded-2xl transition flex items-center justify-center text-base shrink-0" title="Голосовое сообщение">
+                
+                <button onclick="toggleRecordVoiceMessage()" id="record-btn" class="bg-[#242f3d] hover:bg-[#182533] text-slate-300 w-12 h-12 rounded-2xl transition flex items-center justify-center text-lg shrink-0" title="Записать голосовое">
                     🎤
                 </button>
+                
                 <button onclick="sendMessage()" class="bg-[#5288c1] hover:bg-[#4072a7] text-white font-medium px-5 py-3 rounded-2xl transition flex items-center justify-center shadow-lg active:scale-95 shrink-0">
                     ➤
                 </button>
             </div>
+            <div id="voice-status-bar" class="text-xs text-center text-rose-400 mt-2 hidden">
+                🔴 Идет запись голоса... <span id="voice-timer" class="font-mono">00:00</span> (нажмите на ⏹ чтобы остановить и отправить)
+            </div>
         </footer>
     </main>
 
-    <!-- Модальное окно голосового режима (в темном стиле Telegram) -->
-    <div id="voice-modal" class="fixed inset-0 bg-[#0e1621]/95 backdrop-blur-md z-50 flex flex-col items-center justify-between p-6 hidden">
-        <div class="w-full max-w-md flex justify-between items-center text-slate-400">
-            <span class="text-xs uppercase tracking-widest text-sky-400 font-semibold flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span> Защищенный аудио-канал
-            </span>
-            <button onclick="closeVoiceModal()" class="p-2 rounded-xl bg-[#17212b] hover:bg-[#242f3d] text-slate-200 transition text-sm">✕ Закрыть</button>
-        </div>
-
-        <div class="flex flex-col items-center justify-center space-y-6 my-auto">
-            <div class="relative flex items-center justify-center">
-                <div class="absolute w-40 h-40 rounded-full bg-[#5288c1]/10 animate-ping"></div>
-                <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-[#2b5278] to-indigo-600 flex items-center justify-center text-4xl shadow-2xl border-4 border-[#17212b] z-10">
-                    🎙️
-                </div>
-            </div>
-            <div class="text-center space-y-1">
-                <h3 class="text-xl font-semibold text-white" id="voice-status-title">Голосовой чат</h3>
-                <p class="text-xs text-slate-400" id="voice-status-desc">Нажмите кнопку записи для отправки голосового</p>
-                <div id="voice-timer" class="text-sm font-mono text-sky-400 hidden">00:00</div>
-            </div>
-        </div>
-
-        <div class="w-full max-w-sm bg-[#17212b] border border-[#242f3d] p-4 rounded-3xl backdrop-blur flex items-center justify-around shadow-2xl">
-            <button onclick="toggleRecordVoiceMessage()" id="record-btn" class="w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-rose-600/30 transition active:scale-95" title="Записать">
-                ⏺️
-            </button>
-        </div>
-    </div>
-
     <script>
-        // Ваши точные параметры Appwrite (Франкфуртский эндпоинт + правильная таблица messages)
+        // Точные параметры из Appwrite панели
         const PROJECT_ID = '6aafd937003c8bd02759';
         const DATABASE_ID = '6aafdcaa0014b989213e';
         const COLLECTION_ID = 'messages'; 
@@ -175,26 +147,31 @@
             const placeholder = chatBox.querySelector('.m-auto');
             if (placeholder) placeholder.remove();
 
-            // Предотвращаем дублирование элемента, если он уже есть в DOM
             if (document.querySelector(`[data-id="${docId}"]`)) return;
 
             const msgDiv = document.createElement('div');
             msgDiv.className = 'flex items-end justify-start space-x-2 w-full max-w-full';
             msgDiv.setAttribute('data-id', docId);
 
-            let contentHtml = `<p class="text-sm text-slate-100 break-words leading-relaxed whitespace-pre-wrap">${escapeHtml(text || '')}</p>`;
-            if (text && text.includes('🎤')) {
+            let contentHtml = '';
+            const cleanText = text || '';
+
+            // Если сообщение помечено как голосовое, оформляем красивым плеером
+            if (cleanText.includes('🎤 [Голосовое')) {
                 contentHtml = `
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 rounded-full bg-[#5288c1] flex items-center justify-center text-white text-xs shrink-0">▶</div>
-                        <div class="min-w-0">
-                            <p class="text-xs font-medium text-white truncate">${escapeHtml(text)}</p>
-                            <div class="w-28 h-1 bg-[#242f3d] rounded-full mt-1 overflow-hidden">
-                                <div class="w-1/2 h-full bg-sky-400 rounded-full"></div>
+                    <div class="flex items-center space-x-3 py-1">
+                        <div class="w-9 h-9 rounded-full bg-[#5288c1] flex items-center justify-center text-white text-sm shrink-0 shadow cursor-pointer">▶</div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-medium text-white truncate">${escapeHtml(cleanText)}</p>
+                            <div class="w-32 h-1.5 bg-[#242f3d] rounded-full mt-1.5 overflow-hidden">
+                                <div class="w-3/4 h-full bg-sky-400 rounded-full animate-pulse"></div>
                             </div>
                         </div>
                     </div>
                 `;
+            } else {
+                // Обычный текст с жестким переносом строк и защитой от вылезания за рамки
+                contentHtml = `<p class="text-sm text-slate-100 break-words leading-relaxed whitespace-pre-wrap">${escapeHtml(cleanText)}</p>`;
             }
 
             msgDiv.innerHTML = `
@@ -256,47 +233,29 @@
                  .replace(/'/g, "&#039;");
         }
 
-        // Логика голосового режима
         let isRecording = false;
         let recordSeconds = 0;
         let recordInterval = null;
 
-        function openVoiceModal() {
-            document.getElementById('voice-modal').classList.remove('hidden');
-        }
-
-        function closeVoiceModal() {
-            document.getElementById('voice-modal').classList.add('hidden');
-            stopVoiceTimer();
-        }
-
         function toggleRecordVoiceMessage() {
             const btn = document.getElementById('record-btn');
-            const statusTitle = document.getElementById('voice-status-title');
-            const statusDesc = document.getElementById('voice-status-desc');
-            const timerEl = document.getElementById('voice-timer');
+            const statusBar = document.getElementById('voice-status-bar');
 
             isRecording = !isRecording;
             if (isRecording) {
                 btn.textContent = '⏹️';
-                btn.className = 'w-16 h-16 rounded-full bg-amber-600 hover:bg-amber-500 text-white flex items-center justify-center text-2xl shadow-lg transition active:scale-95 animate-pulse';
-                statusTitle.textContent = 'Идет запись...';
-                statusDesc.textContent = 'Говорите в микрофон';
-                timerEl.classList.remove('hidden');
+                btn.className = 'bg-rose-600 hover:bg-rose-500 text-white w-12 h-12 rounded-2xl transition flex items-center justify-center text-lg shadow-lg shrink-0 animate-pulse';
+                statusBar.classList.remove('hidden');
                 startVoiceTimer();
             } else {
-                btn.textContent = '⏺️';
-                btn.className = 'w-16 h-16 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center text-2xl shadow-lg transition active:scale-95';
-                statusTitle.textContent = 'Отправка...';
+                btn.textContent = '🎤';
+                btn.className = 'bg-[#242f3d] hover:bg-[#182533] text-slate-300 w-12 h-12 rounded-2xl transition flex items-center justify-center text-lg shrink-0';
                 stopVoiceTimer();
+                statusBar.classList.add('hidden');
 
-                setTimeout(() => {
-                    const voiceText = `🎤 [Голосовое сообщение (${formatTime(recordSeconds)})]`;
-                    sendTextToDatabase(voiceText);
-                    closeVoiceModal();
-                    statusTitle.textContent = 'Голосовой чат';
-                    statusDesc.textContent = 'Нажмите кнопку записи для отправки голосового';
-                }, 800);
+                // Создаем голосовое сообщение и отправляем в общий поток
+                const voiceText = `🎤 [Голосовое сообщение (${formatTime(recordSeconds)})]`;
+                sendTextToDatabase(voiceText);
             }
         }
 
@@ -313,7 +272,6 @@
         function stopVoiceTimer() {
             if (recordInterval) clearInterval(recordInterval);
             isRecording = false;
-            document.getElementById('voice-timer').classList.add('hidden');
         }
 
         function formatTime(totalSecs) {
