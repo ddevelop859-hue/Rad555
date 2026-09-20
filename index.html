@@ -1,303 +1,118 @@
-            <div <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Chat - Appwrite</title>
-    <!-- Подключаем библиотеку Appwrite -->
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
+    <title>Appwrite Realtime Chat</title>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.0"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        
-        body { 
-            background-color: #0b0c10; 
-            color: #c5c6c7; 
-            height: 100vh; 
-            display: flex; 
-            justify-content: center;
-            align-items: center;
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(69, 162, 158, 0.1), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(102, 252, 241, 0.1), transparent 25%);
-        }
-
-        .app-container { 
-            display: flex; 
-            width: 100%; 
-            height: 100%; 
-            max-width: 1400px; 
-            background: rgba(11, 12, 16, 0.8);
-            box-shadow: 0 0 30px rgba(0,0,0,0.8); 
-        }
-
-        .sidebar { 
-            width: 320px; 
-            background: #12141a; 
-            border-right: 1px solid rgba(69, 162, 158, 0.2); 
-            display: flex; 
-            flex-direction: column; 
-        }
-        
-        .sidebar-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(69, 162, 158, 0.2); }
-        .logo { font-size: 1.2em; color: #66fcf1; font-weight: bold; }
-        .contact-list { flex-grow: 1; overflow-y: auto; }
-        
-        .contact { padding: 15px 20px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.02); }
-        .contact.active { background: rgba(69, 162, 158, 0.15); border-left: 4px solid #66fcf1; }
-        
-        .avatar { 
-            width: 48px; height: 48px; border-radius: 50%; 
-            background: linear-gradient(135deg, #45a29e, #1f2833); 
-            display: flex; align-items: center; justify-content: center; 
-            color: #fff; font-weight: bold; font-size: 1.2em;
-        }
-
-        .contact-info { display: flex; flex-direction: column; flex-grow: 1; }
-        .contact-name { color: #fff; font-weight: 500; font-size: 1.1em; }
-        .contact-status { font-size: 0.85em; color: #66fcf1; }
-
-        .chat-area { flex-grow: 1; display: flex; flex-direction: column; background: #0b0c10; }
-        .chat-header { padding: 15px 25px; background: #12141a; border-bottom: 1px solid rgba(69, 162, 158, 0.2); display: flex; align-items: center; gap: 15px; }
-
-        .messages-container { 
-            flex-grow: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; 
-            background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 4px), radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 3px);
-            background-size: 550px 550px, 350px 350px; background-position: 0 0, 40px 60px;
-        }
-        
-        .msg-wrapper { display: flex; flex-direction: column; width: 100%; }
-        .msg { max-width: 65%; padding: 14px 20px; border-radius: 18px; line-height: 1.5; font-size: 1.05em; word-wrap: break-word; }
-        .msg.received { background: #1f2833; color: #e0e0e0; align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(69, 162, 158, 0.3); }
-        .msg.sent { background: #45a29e; color: #0b0c10; align-self: flex-end; border-bottom-right-radius: 4px; }
-        
-        .input-area { padding: 20px 30px; background: #12141a; display: flex; gap: 15px; border-top: 1px solid rgba(69, 162, 158, 0.2); align-items: center; }
-        .input-wrapper { flex-grow: 1; }
-        .input-area input { width: 100%; padding: 16px 25px; border-radius: 30px; border: 1px solid #1f2833; background: #0b0c10; color: #fff; font-size: 1.05em; outline: none; }
-        .input-area input:focus { border-color: #45a29e; }
-        
-        .send-btn { 
-            width: 55px; height: 55px; border-radius: 50%; border: none; background: #66fcf1; color: #0b0c10; 
-            cursor: pointer; display: flex; align-items: center; justify-content: center; 
-        }
-        .send-icon { width: 24px; height: 24px; fill: currentColor; margin-left: 3px; }
-
-        @media (max-width: 768px) { .sidebar { display: none; } }
+        body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .chat-container { width: 100%; max-width: 500px; background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        h2 { margin-top: 0; text-align: center; color: #38bdf8; }
+        #chat-box { border: 1px solid #334155; background: #0f172a; height: 350px; overflow-y: scroll; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .message { background: #334155; padding: 8px 12px; border-radius: 6px; word-break: break-word; font-size: 14px; }
+        .input-group { display: flex; gap: 10px; }
+        input { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 14px; }
+        button { padding: 10px 20px; background: #0ea5e9; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: #0284c7; }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Контакты -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">🚀 DeepSpace Chat</div>
-            </div>
-            <div class="contact-list">
-                <div class="contact active">
-                    <div class="avatar">GC</div>
-                    <div class="contact-info">
-                        <div class="contact-name">Общий чат</div>
-                        <div class="contact-status">В сети</div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Чат -->
-        <div class="chat-area">
-            <div class="chat-header">
-                <div class="avatar">GC</div>
-                <div class="contact-info">
-                    <div class="contact-name">Общий чат (Appwrite)</div>
-                    <div class="contact-status" id="status-text">Подключение...</div>
-                </div>
-            </div>
-            
-            <div class="messages-container" id="chat-messages">
-                <!-- Сообщения -->
-            </div>
-
-            <div class="input-area">
-                <div class="input-wrapper">
-                    <input type="text" id="message-input" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)">
-                </div>
-                <button class="send-btn" onclick="sendMessage()">
-                    <svg class="send-icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
-                </button>
-            </div>
+    <div class="chat-container">
+        <h2>Чат Appwrite</h2>
+        <div id="chat-box"></div>
+        <div class="input-group">
+            <input type="text" id="message-input" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Отправить</button>
         </div>
     </div>
 
     <script>
-        const client = new Appwrite.Client();
-        
-        // ВАШИ ПРОВЕРЕННЫЕ ДАННЫЕ
-        client
-            .setEndpoint('https://fra.cloud.appwrite.io/v1') 
-            .setProject('6aaf4450002b67541724'); 
-            
-        const databases = new Appwrite.Databases(client);
-        
-        const DATABASE_ID = '6aaf458600227e110ffa';     
-        const COLLECTION_ID = '64af45d3000a0a7a6764'; // Из скриншота
+        // Ваши данные проекта
+        const PROJECT_ID = '6aafd937003c8bd02759'; 
+        const DATABASE_ID = 'Production TablesDB'; // Замените на ID базы данных, если это имя не сработает
+        const COLLECTION_ID = '6aafdcfe00022f833302'; // ID таблицы messages
 
+        const { Client, Databases, ID } = Appwrite;
+        const client = new Client();
+
+        client
+            .setEndpoint('https://cloud.appwrite.io/v1')
+            .setProject(PROJECT_ID);
+
+        const databases = new Databases(client);
+
+        // Загрузка существующих сообщений при старте
         async function loadMessages() {
             try {
-                const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
-                document.getElementById('status-text').innerText = 'Подключено';
-                
-                const container = document.getElementById('chat-messages');
-                container.innerHTML = ''; 
-                
+                const response = await databases.listDocuments(
+                    DATABASE_ID,
+                    COLLECTION_ID
+                );
+                const chatBox = document.getElementById('chat-box');
+                chatBox.innerHTML = '';
                 response.documents.forEach(doc => {
-                    displayMessage(doc.text, 'received'); 
+                    appendMessageToDOM(doc.text);
                 });
             } catch (error) {
-                console.error("Ошибка загрузки:", error);
-                document.getElementById('status-text').innerText = 'Ошибка подключения к базе';
+                console.error('Ошибка загрузки сообщений:', error);
             }
         }
 
+        // Вывод одного сообщения в блок чата
+        function appendMessageToDOM(text) {
+            const chatBox = document.getElementById('chat-box');
+            const msgElement = document.createElement('div');
+            msgElement.className = 'message';
+            msgElement.textContent = text;
+            chatBox.appendChild(msgElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Отправка нового сообщения в базу данных
         async function sendMessage() {
             const input = document.getElementById('message-input');
-            const messageText = input.value.trim();
-            
-            if (messageText !== "") {
-                input.value = ''; 
-                displayMessage(messageText, 'sent');
-                
-                try {
-                    await databases.createDocument(
-                        DATABASE_ID, 
-                        COLLECTION_ID, 
-                        Appwrite.ID.unique(), 
-                        { text: messageText } 
-                    );
-                } catch (error) {
-                    console.error("Ошибка отправки:", error);
-                    alert("Ошибка отправки. Убедитесь, что в коллекции 'meesages' создана колонка 'text' (тип String), а в Security стоят права Any -> Create.");
-                }
-            }
-        }
+            const textValue = input.value.trim();
 
-        function displayMessage(text, type) {
-            if(!text) return;
-            const container = document.getElementById('chat-messages');
-            const wrapper = document.createElement('div');
-            wrapper.className = 'msg-wrapper';
-            
-            const msg = document.createElement('div');
-            msg.className = 'msg ' + type;
-            msg.innerText = text;
-            
-            wrapper.appendChild(msg);
-            container.appendChild(wrapper);
-            container.scrollTop = container.scrollHeight; 
+            if (!textValue) return;
+
+            try {
+                input.value = ''; // Сразу очищаем поле для удобства
+                await databases.createDocument(
+                    DATABASE_ID,
+                    COLLECTION_ID,
+                    ID.unique(),
+                    { text: textValue }
+                );
+            } catch (error) {
+                console.error('Ошибка отправки:', error);
+                alert('Не удалось отправить сообщение: ' + error.message);
+            }
         }
 
         function handleKeyPress(event) {
-            if (event.key === 'Enter') sendMessage();
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
         }
 
-        client.subscribe(`databases.${DATABASE_ID}.collections.${COLLECTION_ID}.documents`, response => {
-            if(response.events.includes("databases.*.collections.*.documents.*.create")) {
-                displayMessage(response.payload.text, 'received');
-            }
-        });
+        // Подписка на обновление данных в реальном времени (Realtime)
+        function subscribeToRealtime() {
+            client.subscribe(
+                `databases.${DATABASE_ID}.collections.${COLLECTION_ID}.documents`,
+                response => {
+                    if (response.events.includes("databases.*.collections.*.documents.*.create")) {
+                        appendMessageToDOM(response.payload.text);
+                    }
+                }
+            );
+        }
 
+        // Инициализация при запуске
         loadMessages();
+        subscribeToRealtime();
     </script>
 </body>
 </html>
 
-                <div class="input-wrapper">
-                    <input type="text" id="message-input" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)">
-                </div>
-                <button class="send-btn" onclick="sendMessage()">
-                    <svg class="send-icon" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const client = new Appwrite.Client();
-        
-        client
-            .setEndpoint('https://cloud.appwrite.io/v1') 
-            .setProject('6aaf458600227e110ffa'); // Твой Project ID уже здесь
-            
-        const databases = new Appwrite.Databases(client);
-        
-        // ВНИМАНИЕ: Если при отправке будет ошибка, значит ID базы другой.
-        // Замени 'Production_TablesDB' на буквенно-цифровой ID базы данных из панели Appwrite.
-        const DATABASE_ID = 'Production_TablesDB';     
-        const COLLECTION_ID = '64af45d3000a0a7a6764'; // Твой ID коллекции meesages
-
-        async function loadMessages() {
-            try {
-                const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
-                document.getElementById('status-text').innerText = 'Подключено';
-                
-                const container = document.getElementById('chat-messages');
-                container.innerHTML = ''; 
-                
-                response.documents.forEach(doc => {
-                    displayMessage(doc.text, 'received'); 
-                });
-            } catch (error) {
-                console.error("Ошибка загрузки:", error);
-                document.getElementById('status-text').innerText = 'Ошибка подключения к базе';
-            }
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('message-input');
-            const messageText = input.value.trim();
-            
-            if (messageText !== "") {
-                input.value = ''; 
-                displayMessage(messageText, 'sent');
-                
-                try {
-                    await databases.createDocument(
-                        DATABASE_ID, 
-                        COLLECTION_ID, 
-                        Appwrite.ID.unique(), 
-                        { text: messageText } 
-                    );
-                } catch (error) {
-                    console.error("Ошибка отправки:", error);
-                    alert("Ошибка отправки. Либо нет колонки 'text', либо неверный Database ID, либо не настроены права Create.");
-                }
-            }
-        }
-
-        function displayMessage(text, type) {
-            if(!text) return;
-            const container = document.getElementById('chat-messages');
-            const wrapper = document.createElement('div');
-            wrapper.className = 'msg-wrapper';
-            
-            const msg = document.createElement('div');
-            msg.className = 'msg ' + type;
-            msg.innerText = text;
-            
-            wrapper.appendChild(msg);
-            container.appendChild(wrapper);
-            container.scrollTop = container.scrollHeight; 
-        }
-
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') sendMessage();
-        }
-
-        client.subscribe(`databases.${DATABASE_ID}.collections.${COLLECTION_ID}.documents`, response => {
-            if(response.events.includes("databases.*.collections.*.documents.*.create")) {
-                displayMessage(response.payload.text, 'received');
-            }
-        });
-
-        loadMessages();
-    </script>
-</body>
-</html>
