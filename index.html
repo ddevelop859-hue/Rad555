@@ -2,112 +2,184 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Чат Appwrite</title>
     <!-- Подключаем SDK Appwrite -->
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; }
-        header { background: #f02e65; color: white; padding: 15px; text-align: center; font-weight: bold; }
-        #chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); word-wrap: break-word; }
-        .input-area { display: flex; padding: 10px; background: white; border-top: 1px solid #ccc; }
-        #msg-input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; font-size: 16px; }
-        #send-btn { background: #f02e65; color: white; border: none; padding: 10px 20px; margin-left: 10px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #chat-container {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+        }
+        header {
+            background: #f02e65;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        #chat-box {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .msg {
+            background: #e1e1e1;
+            padding: 10px;
+            border-radius: 5px;
+            align-self: flex-start;
+            word-break: break-word;
+        }
+        .input-area {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+        #msg-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+            font-size: 16px;
+        }
+        #send-btn {
+            background: #f02e65;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin-left: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #send-btn:hover {
+            background: #d02656;
+        }
     </style>
 </head>
 <body>
 
-    <header id="status">Чат (Подключение...)</header>
-    
-    <div id="chat-box"></div>
-    
-    <div class="input-area">
-        <input type="text" id="msg-input" placeholder="Введите сообщение...">
-        <button id="send-btn">Отправить</button>
+    <div id="chat-container">
+        <header id="status">Чат (Подключение...)</header>
+        
+        <div id="chat-box"></div>
+        
+        <div class="input-area">
+            <input type="text" id="msg-input" placeholder="Введите сообщение...">
+            <button id="send-btn">Отправить</button>
+        </div>
     </div>
 
     <script>
         const { Client, Databases, ID, Query } = Appwrite;
-        
+
         // 1. Инициализация клиента Appwrite
         const client = new Client()
-            .setEndpoint('https://fra.cloud.appwrite.io/v1') // Ваш Endpoint
-            .setProject('6aaf4450002b67541724');             // Ваш Project ID
+            .setEndpoint('https://cloud.appwrite.io/v1') 
+            .setProject('6aaf4450002b67541724');
 
         const databases = new Databases(client);
-        
-        const dbId = '6aaf458600227e110ffa';       // Ваш Database ID
-        const colId = '6aaf45d3000a0a7a6764';      // Ваш Collection ID (meesages)
-        
+
+        const dbId = '6aaf458600227e110ffa'; 
+        // ВНИМАНИЕ: Убедитесь, что colId указан полностью!
+        const colId = '6aaf45d3000ae6002b75'; 
+
         const chatBox = document.getElementById('chat-box');
         const msgInput = document.getElementById('msg-input');
         const sendBtn = document.getElementById('send-btn');
         const status = document.getElementById('status');
 
-        // Функция добавления сообщения на экран
+        // Функция добавления сообщения в интерфейс
         function addMessageToDOM(text) {
             const div = document.createElement('div');
             div.className = 'msg';
             div.textContent = text;
             chatBox.appendChild(div);
-            // Прокрутка чата вниз при новом сообщении
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // 2. Загрузка старых сообщений из базы
+        // 2. Загрузка старых сообщений из базы данных
         async function loadMessages() {
             try {
-                const response = await databases.listDocuments(dbId, colId, [
-                    Query.orderAsc('$createdAt'),
-                    Query.limit(50)
-                ]);
+                const response = await databases.listDocuments(
+                    dbId, 
+                    colId,
+                    [
+                        Query.orderDesc('$createdAt'),
+                        Query.limit(50)
+                    ]
+                );
                 
-                // Очищаем чат перед загрузкой, чтобы избежать дублей
-                chatBox.innerHTML = ''; 
+                chatBox.innerHTML = '';
                 
-                response.documents.forEach(doc => {
-                    addMessageToDOM(doc.text); 
+                // Переворачиваем массив, чтобы новые сообщения были внизу
+                response.documents.reverse().forEach(doc => {
+                    addMessageToDOM(doc.text);
                 });
+                
                 status.textContent = 'Чат (В сети)';
             } catch (error) {
-                console.error('Ошибка загрузки сообщений:', error);
-                status.textContent = 'Ошибка загрузки';
+                console.error('Ошибка загрузки:', error);
+                status.textContent = 'Ошибка загрузки. Проверьте ID и права.';
             }
         }
 
-        // 3. Отправка нового сообщения в базу
+        // 3. Отправка нового сообщения
         async function sendMessage() {
             const text = msgInput.value.trim();
             if (!text) return;
             
-            msgInput.value = ''; // Очищаем поле ввода сразу
+            msgInput.value = ''; 
             
             try {
-                await databases.createDocument(dbId, colId, ID.unique(), {
-                    text: text
-                });
+                await databases.createDocument(
+                    dbId, 
+                    colId, 
+                    ID.unique(), 
+                    { text: text }
+                );
             } catch (error) {
                 console.error('Ошибка отправки:', error);
                 alert('Не удалось отправить сообщение. Проверьте права доступа в Appwrite.');
             }
         }
 
-        // Обработчики клика по кнопке и нажатия Enter
+        // Обработка клика по кнопке и нажатия Enter
         sendBtn.addEventListener('click', sendMessage);
         msgInput.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') sendMessage();
         });
 
-        // 4. Подписка на обновления (Realtime чат)
-        // Это позволяет мгновенно видеть сообщения, отправленные с других устройств
+        // 4. Подписка на обновления в реальном времени (Realtime)
         client.subscribe(`databases.${dbId}.collections.${colId}.documents`, response => {
             if (response.events.includes('databases.*.collections.*.documents.*.create')) {
                 addMessageToDOM(response.payload.text);
             }
         });
 
-        // Запускаем загрузку сообщений при старте приложения
+        // Запуск загрузки сообщений при старте
         loadMessages();
     </script>
 </body>
