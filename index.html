@@ -16,7 +16,6 @@
 </head>
 <body class="h-screen w-screen flex flex-col md:flex-row overflow-hidden bg-[#0e1621]">
 
-    <!-- Боковая панель -->
     <aside class="hidden md:flex w-80 bg-[#17212b] border-r border-[#0e1621] flex-col h-full z-10 shrink-0">
         <div class="p-4 border-b border-[#0e1621] flex items-center justify-between">
             <div class="flex items-center space-x-3">
@@ -52,7 +51,6 @@
         </div>
     </aside>
 
-    <!-- Основной чат -->
     <main class="flex-1 flex flex-col h-full bg-[#0e1621] relative min-w-0 overflow-hidden">
         <header class="h-16 bg-[#17212b] border-b border-[#0e1621] px-4 md:px-6 flex items-center justify-between z-10 shrink-0 shadow-sm">
             <div class="flex items-center space-x-3 min-w-0">
@@ -68,12 +66,9 @@
 
         <div id="error-banner" class="hidden m-3 p-2 bg-rose-500/20 border border-rose-500 text-rose-300 text-xs rounded-xl text-center shrink-0"></div>
 
-        <!-- Контейнер сообщений: единая лента для текста и голосовых, защита от переполнения -->
         <div id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 flex flex-col min-w-0 overflow-x-hidden">
-            <!-- Сообщения подгружаются динамически -->
         </div>
 
-        <!-- Поле ввода: единый поток для текста и голосовых -->
         <footer class="p-3 md:p-4 bg-[#17212b] border-t border-[#0e1621] shrink-0">
             <div class="flex items-center gap-2 max-w-4xl mx-auto">
                 <input type="text" id="message-input" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)"
@@ -94,7 +89,6 @@
     </main>
 
     <script>
-        // Точные параметры из Appwrite панели
         const PROJECT_ID = '6aafd937003c8bd02759';
         const DATABASE_ID = '6aafdcaa0014b989213e';
         const COLLECTION_ID = 'messages'; 
@@ -156,7 +150,6 @@
             let contentHtml = '';
             const cleanText = text || '';
 
-            // Если сообщение помечено как голосовое, оформляем красивым плеером
             if (cleanText.includes('🎤 [Голосовое')) {
                 contentHtml = `
                     <div class="flex items-center space-x-3 py-1">
@@ -170,7 +163,6 @@
                     </div>
                 `;
             } else {
-                // Обычный текст с жестким переносом строк и защитой от вылезания за рамки
                 contentHtml = `<p class="text-sm text-slate-100 break-words leading-relaxed whitespace-pre-wrap">${escapeHtml(cleanText)}</p>`;
             }
 
@@ -253,7 +245,6 @@
                 stopVoiceTimer();
                 statusBar.classList.add('hidden');
 
-                // Создаем голосовое сообщение и отправляем в общий поток
                 const voiceText = `🎤 [Голосовое сообщение (${formatTime(recordSeconds)})]`;
                 sendTextToDatabase(voiceText);
             }
