@@ -2,311 +2,331 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Messenger</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.0"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ST Messenger</title>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0e1621; color: #f5f5f5; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #0e1621; }
-        ::-webkit-scrollbar-thumb { background: #17212b; border-radius: 3px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #0d1117; color: #c9d1d9; height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Верхняя панель */
+        header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #161b22; border-bottom: 1px solid #30363d; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; z-index: 1000; }
+        .logo-area { display: flex; flex-direction: column; }
+        .logo-area span { font-weight: bold; font-size: 15px; color: #58a6ff; }
+        .db-status { font-size: 10px; color: #3fb950; }
+        
+        .header-actions { display: flex; gap: 6px; align-items: center; }
+        .room-badge { background: #21262d; border: 1px solid #30363d; padding: 5px 8px; border-radius: 10px; font-size: 11px; color: #c9d1d9; cursor: pointer; }
+        .profile-btn { background: #238636; color: white; border: none; padding: 5px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold; }
+        .exit-btn { background: #da3633; color: white; border: none; padding: 5px 8px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; }
+
+        /* Радио станции со светомузыкой (5 кружков) */
+        .radio-bar { position: fixed; top: 60px; left: 0; right: 0; height: 50px; background: #111418; border-bottom: 1px solid #30363d; display: flex; align-items: center; justify-content: space-around; padding: 0 10px; z-index: 900; }
+        .radio-circle { width: 36px; height: 36px; border-radius: 50%; background: #21262d; border: 2px solid #30363d; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #8b949e; cursor: pointer; flex-shrink: 0; transition: 0.3s; }
+        .radio-circle.active { border-color: #58a6ff; color: #58a6ff; background: #1f6feb33; box-shadow: 0 0 12px #58a6ff, inset 0 0 8px #58a6ff; animation: neonPulse 1.5s infinite alternate; }
+
+        @keyframes neonPulse {
+            0% { box-shadow: 0 0 5px #58a6ff, inset 0 0 3px #58a6ff; border-color: #58a6ff; }
+            100% { box-shadow: 0 0 20px #58a6ff, 0 0 35px #3fb950, inset 0 0 10px #58a6ff; border-color: #3fb950; }
+        }
+
+        /* Чат с неоновой подсветкой по бокам */
+        .chat-container { margin-top: 110px; margin-bottom: 70px; flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 0 20px rgba(88, 166, 255, 0.15); border-left: 3px solid rgba(88, 166, 255, 0.4); border-right: 3px solid rgba(88, 166, 255, 0.4); }
+
+        /* Пузыри сообщений (Мои справа, собеседника слева) */
+        .message-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; position: relative; word-break: break-word; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .message-bubble.my { background: #1f6feb; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .message-bubble.other { background: #21262d; color: #c9d1d9; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #30363d; }
+        .msg-user { font-size: 10px; opacity: 0.7; margin-bottom: 3px; display: block; }
+        
+        /* Кнопка удаления сообщения */
+        .delete-btn { position: absolute; bottom: 2px; right: 4px; font-size: 10px; color: rgba(255,255,255,0.4); cursor: pointer; background: none; border: none; padding: 2px; }
+        .delete-btn:hover { color: #ff7b72; }
+
+        /* Нижняя панель ввода */
+        .input-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 70px; background: #161b22; border-top: 1px solid #30363d; display: flex; align-items: center; padding: 10px 15px; gap: 10px; z-index: 1000; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+        .input-bar input { flex: 1; height: 44px; background: #0d1117; border: 1px solid #30363d; border-radius: 22px; padding: 0 15px; color: white; font-size: 14px; outline: none; }
+        .input-bar input:focus { border-color: #58a6ff; }
+        .send-btn { width: 44px; height: 44px; background: #238636; border: none; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .send-btn:active { transform: scale(0.95); }
+
+        /* Модальные окна */
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-content { background: #161b22; border: 1px solid #30363d; padding: 24px; border-radius: 12px; width: 90%; max-width: 340px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .modal-content input { height: 44px; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; color: white; font-size: 14px; outline: none; }
+        .modal-content input:focus { border-color: #58a6ff; }
+        .modal-content button { height: 44px; background: #238636; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .error-msg { color: #f85149; font-size: 12px; text-align: center; display: none; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col md:flex-row overflow-hidden bg-[#0e1621]">
+<body>
 
-    <aside class="hidden md:flex w-80 bg-[#17212b] border-r border-[#0e1621] flex-col h-full z-10 shrink-0">
-        <div class="p-4 border-b border-[#0e1621] flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-full bg-[#2b5278] flex items-center justify-center font-bold text-white shadow-md">
-                    TG
-                </div>
-                <div>
-                    <h1 class="font-semibold text-sm text-slate-100">Telegram Appwrite</h1>
-                    <span class="text-xs text-emerald-400 flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Онлайн
-                    </span>
-                </div>
-            </div>
+    <header>
+        <div class="logo-area">
+            <span>ST Messenger</span>
+            <span class="db-status" id="dbStatus">Подключено</span>
         </div>
-
-        <div class="p-3">
-            <input type="text" placeholder="Поиск..." class="w-full bg-[#242f3d] border border-transparent rounded-xl px-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-[#5288c1] transition">
+        <div class="header-actions">
+            <div class="room-badge" onclick="openRoomAuthModal()">Комната: <span id="currentRoomText">—</span></div>
+            <button class="exit-btn" onclick="exitRoom()">Выход</button>
+            <button class="profile-btn" onclick="openProfile()">Профиль</button>
         </div>
+    </header>
 
-        <div class="flex-1 overflow-y-auto px-2 space-y-1">
-            <div class="flex items-center space-x-3 p-3 rounded-xl bg-[#2b5278]/40 border border-[#5288c1]/30 cursor-pointer transition">
-                <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-lg font-bold shadow">
-                    💬
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex justify-between items-baseline">
-                        <h3 class="font-medium text-sm text-white truncate">Общий чат</h3>
-                        <span class="text-[10px] text-sky-400">сейчас</span>
-                    </div>
-                    <p class="text-xs text-slate-400 truncate">Текст и голосовые вместе</p>
-                </div>
-            </div>
+    <div class="radio-bar">
+        <div class="radio-circle" onclick="toggleRadio(1)" title="1. Европа Плюс">1</div>
+        <div class="radio-circle" onclick="toggleRadio(2)" title="2. Шансон">2</div>
+        <div class="radio-circle" onclick="toggleRadio(3)" title="3. Deep House">3</div>
+        <div class="radio-circle" onclick="toggleRadio(4)" title="4. Рок">4</div>
+        <div class="radio-circle" onclick="toggleRadio(5)" title="5. Зарубежные">5</div>
+    </div>
+
+    <div class="chat-container" id="chatContainer"></div>
+
+    <div class="input-bar">
+        <input type="text" id="msgInput" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)">
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+
+    <div class="modal" id="roomAuthModal" style="display:none;">
+        <div class="modal-content">
+            <h3 style="color: #58a6ff; font-size: 18px; text-align: center;">🔒 Вход в комнату</h3>
+            <p style="font-size: 12px; color: #8b949e; text-align: center;">Введите номер комнаты и пароль. Если комната новая, пароль зафиксируется в базе.</p>
+            <input type="text" id="authRoomInput" placeholder="Номер комнаты (например, 9)">
+            <input type="password" id="authPassInput" placeholder="Пароль комнаты">
+            <div class="error-msg" id="authError">❌ Неверный пароль! Отказ в доступе.</div>
+            <button onclick="verifyAndEnterRoom()">Войти в комнату</button>
         </div>
-    </aside>
+    </div>
 
-    <main class="flex-1 flex flex-col h-full bg-[#0e1621] relative min-w-0 overflow-hidden">
-        <header class="h-16 bg-[#17212b] border-b border-[#0e1621] px-4 md:px-6 flex items-center justify-between z-10 shrink-0 shadow-sm">
-            <div class="flex items-center space-x-3 min-w-0">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center font-bold shrink-0">
-                    💬
-                </div>
-                <div class="min-w-0">
-                    <h2 class="font-semibold text-sm text-slate-100 truncate">Общий чат</h2>
-                    <span class="text-xs text-emerald-400" id="connection-status">Подключение к базе...</span>
-                </div>
-            </div>
-        </header>
-
-        <div id="error-banner" class="hidden m-3 p-2 bg-rose-500/20 border border-rose-500 text-rose-300 text-xs rounded-xl text-center shrink-0"></div>
-
-        <div id="chat-box" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 flex flex-col min-w-0 overflow-x-hidden">
+    <div class="modal" id="profileModal" style="display:none;">
+        <div class="modal-content">
+            <h3 style="color: #58a6ff; font-size: 18px; text-align: center;">⚙️ Настройки профиля</h3>
+            <span style="font-size: 12px; color: #8b949e;">Ваше имя в чате:</span>
+            <input type="text" id="modalUsernameInput" placeholder="Введите имя">
+            <button onclick="saveProfile()">Сохранить настройки</button>
+            <button style="background: #21262d; border: 1px solid #30363d;" onclick="closeProfile()">Закрыть</button>
         </div>
-
-        <footer class="p-3 md:p-4 bg-[#17212b] border-t border-[#0e1621] shrink-0">
-            <div class="flex items-center gap-2 max-w-4xl mx-auto">
-                <input type="text" id="message-input" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)"
-                    class="flex-1 bg-[#242f3d] border border-transparent rounded-2xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#5288c1] transition shadow-inner min-w-0">
-                
-                <button onclick="toggleRecordVoiceMessage()" id="record-btn" class="bg-[#242f3d] hover:bg-[#182533] text-slate-300 w-12 h-12 rounded-2xl transition flex items-center justify-center text-lg shrink-0" title="Записать голосовое">
-                    🎤
-                </button>
-                
-                <button onclick="sendMessage()" class="bg-[#5288c1] hover:bg-[#4072a7] text-white font-medium px-5 py-3 rounded-2xl transition flex items-center justify-center shadow-lg active:scale-95 shrink-0">
-                    ➤
-                </button>
-            </div>
-            <div id="voice-status-bar" class="text-xs text-center text-rose-400 mt-2 hidden">
-                🔴 Идет запись голоса с микрофона... <span id="voice-timer" class="font-mono">00:00</span> (нажмите на ⏹ чтобы остановить и отправить)
-            </div>
-        </footer>
-    </main>
+    </div>
 
     <script>
+        const ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
         const PROJECT_ID = '6aafd937003c8bd02759';
         const DATABASE_ID = '6aafdcaa0014b989213e';
-        const COLLECTION_ID = '6aafdcfe00022f833302'; 
+        const COLLECTION_ID = '6aafdcfe00022f833302';
 
-        const { Client, Databases, ID } = Appwrite;
-        let client, databases;
+        const client = new Appwrite.Client().setEndpoint(ENDPOINT).setProject(PROJECT_ID);
+        const databases = new Appwrite.Databases(client);
 
-        function initAppwrite() {
-            try {
-                client = new Client();
-                client.setEndpoint('https://fra.cloud.appwrite.io/v1').setProject(PROJECT_ID);
-                databases = new Databases(client);
-                document.getElementById('connection-status').textContent = 'Подключено к базе';
-                loadMessages();
-                subscribeToRealtime();
-            } catch (e) {
-                console.error(e);
-                showError('Ошибка инициализации: ' + e.message);
+        let currentRoom = localStorage.getItem('st_active_room') || '';
+        let currentUsername = localStorage.getItem('st_username') || 'User_' + Math.floor(Math.random() * 9000 + 1000);
+        let activeRadioStream = null;
+
+        document.getElementById('modalUsernameInput').value = currentUsername;
+
+        window.onload = () => {
+            if (!currentRoom) {
+                openRoomAuthModal();
+            } else {
+                document.getElementById('currentRoomText').innerText = currentRoom;
+                initMessenger();
+            }
+        };
+
+        function openRoomAuthModal() {
+            document.getElementById('roomAuthModal').style.display = 'flex';
+            document.getElementById('authError').style.display = 'none';
+            if (currentRoom) {
+                document.getElementById('authRoomInput').value = currentRoom;
             }
         }
 
-        function showError(text) {
-            const banner = document.getElementById('error-banner');
-            banner.textContent = text;
-            banner.classList.remove('hidden');
+        async function verifyAndEnterRoom() {
+            const room = document.getElementById('authRoomInput').value.trim();
+            const pass = document.getElementById('authPassInput').value.trim();
+            const errBox = document.getElementById('authError');
+
+            if (!room || !pass) {
+                errBox.innerText = 'Заполните номер комнаты и пароль!';
+                errBox.style.display = 'block';
+                return;
+            }
+
+            try {
+                // Загружаем документы из базы для поиска серверного пароля комнаты (маркер AUTH_ROOM_LOCK::<комната>::<пароль>)
+                const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
+                    Appwrite.Query.orderAsc('$createdAt'),
+                    Appwrite.Query.limit(100)
+                ]);
+
+                let existingRoomPass = null;
+                for (let doc of response.documents) {
+                    const raw = doc.text || '';
+                    const parts = raw.split('::');
+                    if (parts.length >= 3 && parts[0] === 'AUTH_ROOM_LOCK' && parts[1] === room) {
+                        existingRoomPass = parts[2];
+                        break;
+                    }
+                }
+
+                if (existingRoomPass !== null) {
+                    // Комната уже закреплена за паролем на сервере — проверяем точность
+                    if (existingRoomPass !== pass) {
+                        errBox.innerText = '❌ Неверный пароль! Отказ в доступе.';
+                        errBox.style.display = 'block';
+                        return;
+                    }
+                } else {
+                    // Комната новая или пустая — записываем постоянный защитный пароль в базу
+                    await databases.createDocument(DATABASE_ID, COLLECTION_ID, Appwrite.ID.unique(), {
+                        text: `AUTH_ROOM_LOCK::${room}::${pass}`
+                    });
+                }
+
+                currentRoom = room;
+                localStorage.setItem('st_active_room', currentRoom);
+                document.getElementById('currentRoomText').innerText = currentRoom;
+                document.getElementById('roomAuthModal').style.display = 'none';
+                errBox.style.display = 'none';
+                
+                initMessenger();
+            } catch (e) {
+                errBox.innerText = 'Ошибка связи с базой данных!';
+                errBox.style.display = 'block';
+            }
+        }
+
+        function exitRoom() {
+            localStorage.removeItem('st_active_room');
+            currentRoom = '';
+            openRoomAuthModal();
+        }
+
+        function openProfile() {
+            document.getElementById('profileModal').style.display = 'flex';
+        }
+
+        function closeProfile() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('modalUsernameInput').value.trim();
+            if (name) {
+                currentUsername = name;
+                localStorage.setItem('st_username', currentUsername);
+                closeProfile();
+                loadMessages();
+            }
+        }
+
+        async function initMessenger() {
+            document.getElementById('dbStatus').innerText = 'Подключено';
+            loadMessages();
+            setInterval(loadMessages, 3500);
         }
 
         async function loadMessages() {
-            const chatBox = document.getElementById('chat-box');
+            if (!currentRoom) return;
             try {
-                const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
-                chatBox.innerHTML = '';
+                const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
+                    Appwrite.Query.orderDesc('$createdAt'),
+                    Appwrite.Query.limit(70)
+                ]);
                 
-                if (response.documents.length === 0) {
-                    chatBox.innerHTML = '<div class="m-auto text-slate-500 text-sm">Нет сообщений. Напишите первое!</div>';
-                    return;
-                }
+                const container = document.getElementById('chatContainer');
+                container.innerHTML = '';
+                
+                const docs = response.documents.reverse();
+                docs.forEach(doc => {
+                    const raw = doc.text || '';
+                    const parts = raw.split('::');
+                    
+                    // Пропускаем системные пароли комнат
+                    if (parts[0] === 'AUTH_ROOM_LOCK' || parts[0] === 'ROOM_AUTH') return;
 
-                response.documents.forEach(doc => {
-                    appendMessageToDOM(doc.$id, doc.text);
+                    if (parts.length >= 3) {
+                        const msgRoom = parts[0];
+                        const msgUser = parts[1];
+                        const msgText = parts.slice(2).join('::');
+
+                        // Отображаем сообщения только выбранной комнаты
+                        if (msgRoom === currentRoom) {
+                            const isMy = (msgUser === currentUsername);
+                            const bubble = document.createElement('div');
+                            bubble.className = `message-bubble ${isMy ? 'my' : 'other'}`;
+                            
+                            bubble.innerHTML = `
+                                <span class="msg-user">${escapeHtml(msgUser)}</span>
+                                <div>${escapeHtml(msgText)}</div>
+                                <button class="delete-btn" onclick="deleteMessage('${doc.$id}')" title="Удалить">▲</button>
+                            `;
+                            container.appendChild(bubble);
+                        }
+                    }
                 });
-            } catch (error) {
-                console.error('Ошибка загрузки сообщений:', error);
-                showError('Ошибка загрузки: ' + error.message);
+                container.scrollTop = container.scrollHeight;
+            } catch (e) {
+                console.error("Ошибка загрузки сообщений:", e);
             }
-        }
-
-        function appendMessageToDOM(docId, text) {
-            const chatBox = document.getElementById('chat-box');
-            const placeholder = chatBox.querySelector('.m-auto');
-            if (placeholder) placeholder.remove();
-
-            if (document.querySelector(`[data-id="${docId}"]`)) return;
-
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'flex items-end justify-start space-x-2 w-full max-w-full';
-            msgDiv.setAttribute('data-id', docId);
-
-            let contentHtml = '';
-            const cleanText = text || '';
-
-            if (cleanText.startsWith('AUDIO:')) {
-                const audioUrl = cleanText.replace('AUDIO:', '');
-                contentHtml = `
-                    <div class="flex items-center space-x-3 py-1">
-                        <audio controls src="${escapeHtml(audioUrl)}" class="w-48 h-8"></audio>
-                    </div>
-                `;
-            } else {
-                contentHtml = `<p class="text-sm text-slate-100 break-words leading-relaxed whitespace-pre-wrap">${escapeHtml(cleanText)}</p>`;
-            }
-
-            msgDiv.innerHTML = `
-                <div class="max-w-[85%] md:max-w-[65%] bg-[#182533] border border-[#242f3d] px-4 py-3 rounded-2xl rounded-bl-sm shadow-md relative group overflow-hidden">
-                    ${contentHtml}
-                    <button onclick="deleteMessage('${docId}')" class="absolute -top-2 -right-2 bg-rose-600 hover:bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition shadow z-10" title="Удалить">
-                        ✕
-                    </button>
-                </div>
-            `;
-            chatBox.appendChild(msgDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
         async function sendMessage() {
-            const input = document.getElementById('message-input');
-            const textValue = input.value.trim();
-            if (!textValue) return;
+            const input = document.getElementById('msgInput');
+            const text = input.value.trim();
+            if (!text || !currentRoom) return;
 
-            input.value = '';
-            await sendTextToDatabase(textValue);
-        }
-
-        async function sendTextToDatabase(textValue) {
+            const payload = `${currentRoom}::${currentUsername}::${text}`;
             try {
-                await databases.createDocument(
-                    DATABASE_ID,
-                    COLLECTION_ID,
-                    ID.unique(),
-                    { text: textValue }
-                );
-            } catch (error) {
-                console.error('Ошибка отправки:', error);
-                showError('Не удалось отправить: ' + error.message);
-            }
-        }
-
-        async function deleteMessage(docId) {
-            try {
-                await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, docId);
-                const el = document.querySelector(`[data-id="${docId}"]`);
-                if (el) el.remove();
-            } catch (error) {
-                console.error('Ошибка удаления:', error);
-                showError('Не удалось удалить: ' + error.message);
-            }
-        }
-
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') sendMessage();
-        }
-
-        function escapeHtml(unsafe) {
-            return (unsafe || '')
-                 .replace(/&/g, "&amp;")
-                 .replace(/</g, "&lt;")
-                 .replace(/>/g, "&gt;")
-                 .replace(/"/g, "&quot;")
-                 .replace(/'/g, "&#039;");
-        }
-
-        let isRecording = false;
-        let mediaRecorder = null;
-        let audioChunks = [];
-        let recordSeconds = 0;
-        let recordInterval = null;
-
-        async function toggleRecordVoiceMessage() {
-            const btn = document.getElementById('record-btn');
-            const statusBar = document.getElementById('voice-status-bar');
-
-            if (!isRecording) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-
-                    mediaRecorder.ondataavailable = event => {
-                        audioChunks.push(event.data);
-                    };
-
-                    mediaRecorder.onstop = async () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        const audioUrl = URL.createObjectURL(audioBlob);
-                        await sendTextToDatabase('AUDIO:' + audioUrl);
-                    };
-
-                    mediaRecorder.start();
-                    isRecording = true;
-                    btn.textContent = '⏹️';
-                    btn.className = 'bg-rose-600 hover:bg-rose-500 text-white w-12 h-12 rounded-2xl transition flex items-center justify-center text-lg shadow-lg shrink-0 animate-pulse';
-                    statusBar.classList.remove('hidden');
-                    startVoiceTimer();
-                } catch (e) {
-                    showError('Нет доступа к микрофону: ' + e.message);
-                }
-            } else {
-                if (mediaRecorder) {
-                    mediaRecorder.stop();
-                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                }
-                btn.textContent = '🎤';
-                btn.className = 'bg-[#242f3d] hover:bg-[#182533] text-slate-300 w-12 h-12 rounded-2xl transition flex items-center justify-center text-lg shrink-0';
-                stopVoiceTimer();
-                statusBar.classList.add('hidden');
-            }
-        }
-
-        function startVoiceTimer() {
-            recordSeconds = 0;
-            const timerEl = document.getElementById('voice-timer');
-            timerEl.textContent = '00:00';
-            recordInterval = setInterval(() => {
-                recordSeconds++;
-                timerEl.textContent = formatTime(recordSeconds);
-            }, 1000);
-        }
-
-        function stopVoiceTimer() {
-            if (recordInterval) clearInterval(recordInterval);
-            isRecording = false;
-        }
-
-        function formatTime(totalSecs) {
-            const mins = Math.floor(totalSecs / 60).toString().padStart(2, '0');
-            const secs = (totalSecs % 60).toString().padStart(2, '0');
-            return `${mins}:${secs}`;
-        }
-
-        function subscribeToRealtime() {
-            try {
-                client.subscribe(
-                    `databases.${DATABASE_ID}.collections.${COLLECTION_ID}.documents`,
-                    response => {
-                        if (response.events.some(event => event.includes(".create"))) {
-                            appendMessageToDOM(response.payload.$id, response.payload.text);
-                        } else if (response.events.some(event => event.includes(".delete"))) {
-                            const el = document.querySelector(`[data-id="${response.payload.$id}"]`);
-                            if (el) el.remove();
-                        }
-                    }
-                );
+                await databases.createDocument(DATABASE_ID, COLLECTION_ID, Appwrite.ID.unique(), {
+                    text: payload
+                });
+                input.value = '';
+                loadMessages();
             } catch (e) {
-                console.error("Realtime error:", e);
+                console.error('Ошибка отправки сообщения: ' + e.message);
             }
         }
 
-        window.onload = initAppwrite;
+        async function deleteMessage(id) {
+            try {
+                await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
+                loadMessages();
+            } catch (e) {
+                console.error("Ошибка удаления:", e);
+            }
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function toggleRadio(id) {
+            document.querySelectorAll('.radio-circle').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (activeRadioStream) {
+                activeRadioStream.pause();
+                activeRadioStream = null;
+            }
+
+            const streams = {
+                1: 'https://stream.europaplus.ru:8443/ep_live_96.mp3',      // Европа Плюс
+                2: 'https://chanson.hostingradio.ru:8043/chanson128.mp3',   // Шансон
+                3: 'https://radiorecord.hostingradio.ru/deep96.aac',        // Deep House
+                4: 'https://radiorecord.hostingradio.ru/rock96.aac',        // Рок
+                5: 'https://radiorecord.hostingradio.ru/yo96.aac'           // Зарубежные
+            };
+
+            if (streams[id]) {
+                activeRadioStream = new Audio(streams[id]);
+                activeRadioStream.play().catch(err => console.error('Аудиопоток радио не запущен'));
+            }
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
     </script>
 </body>
 </html>
