@@ -4,159 +4,372 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>ST Messenger</title>
+    <!-- Appwrite SDK -->
     <script src="https://cdn.jsdelivr.net/npm/appwrite@14.0.1"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: #0d1117; color: #c9d1d9; height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-
-        /* Верхняя панель */
-        header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: #161b22; border-bottom: 1px solid #30363d; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; z-index: 1000; }
-        .logo-area { display: flex; flex-direction: column; }
-        .logo-area span { font-weight: bold; font-size: 15px; color: #58a6ff; }
-        .db-status { font-size: 10px; color: #3fb950; }
-        
-        .header-actions { display: flex; gap: 6px; align-items: center; }
-        .room-badge { background: #21262d; border: 1px solid #30363d; padding: 5px 8px; border-radius: 10px; font-size: 11px; color: #c9d1d9; cursor: pointer; }
-        .profile-btn { background: #238636; color: white; border: none; padding: 5px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold; }
-        .exit-btn { background: #da3633; color: white; border: none; padding: 5px 8px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; }
-
-        /* Радио станции со светомузыкой (5 кружков) */
-        .radio-bar { position: fixed; top: 60px; left: 0; right: 0; height: 50px; background: #111418; border-bottom: 1px solid #30363d; display: flex; align-items: center; justify-content: space-around; padding: 0 10px; z-index: 900; }
-        .radio-circle { width: 36px; height: 36px; border-radius: 50%; background: #21262d; border: 2px solid #30363d; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #8b949e; cursor: pointer; flex-shrink: 0; transition: 0.3s; }
-        .radio-circle.active { border-color: #58a6ff; color: #58a6ff; background: #1f6feb33; box-shadow: 0 0 12px #58a6ff, inset 0 0 8px #58a6ff; animation: neonPulse 1.5s infinite alternate; }
-
-        @keyframes neonPulse {
-            0% { box-shadow: 0 0 5px #58a6ff, inset 0 0 3px #58a6ff; border-color: #58a6ff; }
-            100% { box-shadow: 0 0 20px #58a6ff, 0 0 35px #3fb950, inset 0 0 10px #58a6ff; border-color: #3fb950; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
-        /* Чат с неоновой подсветкой по бокам */
-        .chat-container { margin-top: 110px; margin-bottom: 70px; flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 0 20px rgba(88, 166, 255, 0.15); border-left: 3px solid rgba(88, 166, 255, 0.4); border-right: 3px solid rgba(88, 166, 255, 0.4); }
-
-        /* Пузыри сообщений (Мои справа, собеседника слева) */
-        .message-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; position: relative; word-break: break-word; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .message-bubble.my { background: #1f6feb; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .message-bubble.other { background: #21262d; color: #c9d1d9; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #30363d; }
-        .msg-user { font-size: 10px; opacity: 0.7; margin-bottom: 3px; display: block; }
+        /* Верхняя панель */
+        .header {
+            background: #111827;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .logo-area { display: flex; flex-direction: column; }
+        .app-title { font-size: 16px; font-weight: 700; color: #60a5fa; text-shadow: 0 0 10px rgba(96, 165, 250, 0.4); }
+        .db-status { font-size: 10px; color: #10b981; font-weight: bold; }
         
-        /* Кнопка удаления сообщения */
-        .delete-btn { position: absolute; bottom: 2px; right: 4px; font-size: 10px; color: rgba(255,255,255,0.4); cursor: pointer; background: none; border: none; padding: 2px; }
-        .delete-btn:hover { color: #ff7b72; }
+        .header-controls { display: flex; align-items: center; gap: 8px; }
+        .badge { background: rgba(30, 41, 59, 0.8); border: 1px solid #3b82f6; color: #93c5fd; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .btn-header { background: #ef4444; border: none; color: white; padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); transition: 0.2s; }
+        .btn-header.profile-btn { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+        .btn-header:active { transform: scale(0.95); }
 
-        /* Нижняя панель ввода */
-        .input-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 70px; background: #161b22; border-top: 1px solid #30363d; display: flex; align-items: center; padding: 10px 15px; gap: 10px; z-index: 1000; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-        .input-bar input { flex: 1; height: 44px; background: #0d1117; border: 1px solid #30363d; border-radius: 22px; padding: 0 15px; color: white; font-size: 14px; outline: none; }
-        .input-bar input:focus { border-color: #58a6ff; }
-        .send-btn { width: 44px; height: 44px; background: #238636; border: none; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-        .send-btn:active { transform: scale(0.95); }
+        /* Радиостанции (20 штук) */
+        .radio-bar {
+            background: #0f172a;
+            padding: 10px;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            z-index: 900;
+        }
+        .radio-bar::-webkit-scrollbar { display: none; }
+        
+        .radio-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 2px solid #475569;
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .radio-circle.neon-active {
+            background: #3b82f6;
+            border-color: #60a5fa;
+            color: #ffffff;
+            box-shadow: 0 0 15px #3b82f6, inset 0 0 8px rgba(255,255,255,0.6);
+            animation: pulse-neon 1.5s infinite alternate;
+        }
+        @keyframes pulse-neon {
+            0% { box-shadow: 0 0 10px #3b82f6; }
+            100% { box-shadow: 0 0 20px #60a5fa, 0 0 35px #10b981; }
+        }
+
+        /* Чат */
+        .chat-container {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: radial-gradient(circle at center, #111827 0%, #0b0f19 100%);
+            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+        .message-row { display: flex; width: 100%; margin-bottom: 4px; }
+        .message-row.outgoing { justify-content: flex-end; }
+        .message-row.incoming { justify-content: flex-start; }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            position: relative;
+            font-size: 14px;
+            line-height: 1.4;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            word-break: break-word;
+        }
+        .message-row.outgoing .message-bubble { background: #2563eb; color: #ffffff; border-bottom-right-radius: 3px; }
+        .message-row.incoming .message-bubble { background: #1e293b; color: #f1f5f9; border-bottom-left-radius: 3px; border: 1px solid rgba(255,255,255,0.05); }
+        
+        .msg-author { font-size: 11px; font-weight: 600; color: #93c5fd; margin-bottom: 3px; }
+        .msg-text { margin-bottom: 2px; }
+        
+        .msg-delete {
+            position: absolute;
+            top: 4px;
+            right: 6px;
+            font-size: 10px;
+            cursor: pointer;
+            opacity: 0.4;
+            transition: 0.2s;
+            background: none;
+            border: none;
+            color: inherit;
+        }
+        .message-bubble:hover .msg-delete { opacity: 1; color: #ff7b72; }
+
+        /* Ввод сообщения */
+        .input-panel {
+            background: #111827;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            z-index: 1000;
+        }
+        .input-field {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 12px 16px;
+            border-radius: 22px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+        .input-field:focus { border-color: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.3); }
+        .send-btn {
+            background: #10b981;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+        .send-btn:active { transform: scale(0.92); }
 
         /* Модальные окна */
-        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .modal-content { background: #161b22; border: 1px solid #30363d; padding: 24px; border-radius: 12px; width: 90%; max-width: 340px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .modal-content input { height: 44px; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 0 12px; color: white; font-size: 14px; outline: none; }
-        .modal-content input:focus { border-color: #58a6ff; }
-        .modal-content button { height: 44px; background: #238636; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .error-msg { color: #f85149; font-size: 12px; text-align: center; display: none; }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+        .modal-card {
+            background: #111827;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            width: 90%;
+            max-width: 340px;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .modal-title { font-size: 18px; font-weight: 700; color: #60a5fa; text-align: center; }
+        .modal-subtitle { font-size: 12px; color: #94a3b8; text-align: center; }
+        .modal-input { background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 10px; color: #fff; font-size: 14px; outline: none; width: 100%; }
+        .modal-input:focus { border-color: #3b82f6; }
+        .modal-btn { background: #2563eb; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .modal-btn:active { transform: scale(0.98); }
+        .modal-error { color: #ef4444; font-size: 13px; text-align: center; display: none; }
     </style>
 </head>
 <body>
 
-    <header>
+    <div class="header">
         <div class="logo-area">
-            <span>ST Messenger</span>
-            <span class="db-status" id="dbStatus">Подключено</span>
+            <span class="app-title">ST Messenger</span>
+            <span class="db-status" id="dbStatus">Ожидание...</span>
         </div>
-        <div class="header-actions">
-            <div class="room-badge" onclick="openRoomAuthModal()">Комната: <span id="currentRoomText">—</span></div>
-            <button class="exit-btn" onclick="exitRoom()">Выход</button>
-            <button class="profile-btn" onclick="openProfile()">Профиль</button>
+        <div class="header-controls">
+            <div class="badge" id="roomBadge" onclick="openRoomModal()">Комната: —</div>
+            <button class="btn-header" onclick="exitRoom()">Выход</button>
+            <button class="btn-header profile-btn" onclick="openProfileModal()">Профиль</button>
         </div>
-    </header>
+    </div>
 
-    <div class="radio-bar">
-        <div class="radio-circle" onclick="toggleRadio(1)" title="1. Европа Плюс">1</div>
-        <div class="radio-circle" onclick="toggleRadio(2)" title="2. Шансон">2</div>
-        <div class="radio-circle" onclick="toggleRadio(3)" title="3. Deep House">3</div>
-        <div class="radio-circle" onclick="toggleRadio(4)" title="4. Рок">4</div>
-        <div class="radio-circle" onclick="toggleRadio(5)" title="5. Зарубежные">5</div>
+    <!-- 20 Радиостанций -->
+    <div class="radio-bar" id="radioBar">
+        <!-- Генерируются через JS -->
     </div>
 
     <div class="chat-container" id="chatContainer"></div>
 
-    <div class="input-bar">
-        <input type="text" id="msgInput" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)">
+    <div class="input-panel">
+        <input type="text" class="input-field" id="messageInput" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)">
         <button class="send-btn" onclick="sendMessage()">➤</button>
     </div>
 
-    <div class="modal" id="roomAuthModal" style="display:none;">
-        <div class="modal-content">
-            <h3 style="color: #58a6ff; font-size: 18px; text-align: center;">🔒 Вход в комнату</h3>
-            <p style="font-size: 12px; color: #8b949e; text-align: center;">Введите номер комнаты и пароль. Если комната новая, пароль зафиксируется в базе.</p>
-            <input type="text" id="authRoomInput" placeholder="Номер комнаты (например, 9)">
-            <input type="password" id="authPassInput" placeholder="Пароль комнаты">
-            <div class="error-msg" id="authError">❌ Неверный пароль! Отказ в доступе.</div>
-            <button onclick="verifyAndEnterRoom()">Войти в комнату</button>
+    <!-- Авторизация Комнаты -->
+    <div class="modal-overlay" id="roomModal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-title">🔒 Вход в комнату</div>
+            <div class="modal-subtitle">Введите номер и пароль. Если комната новая, пароль зафиксируется навсегда.</div>
+            <input type="text" class="modal-input" id="roomInput" placeholder="Номер комнаты (например, 9)">
+            <input type="password" class="modal-input" id="roomPasswordInput" placeholder="Пароль комнаты">
+            <div class="modal-error" id="roomError"></div>
+            <button class="modal-btn" onclick="submitRoomAuth()">Войти в комнату</button>
         </div>
     </div>
 
-    <div class="modal" id="profileModal" style="display:none;">
-        <div class="modal-content">
-            <h3 style="color: #58a6ff; font-size: 18px; text-align: center;">⚙️ Настройки профиля</h3>
-            <span style="font-size: 12px; color: #8b949e;">Ваше имя в чате:</span>
-            <input type="text" id="modalUsernameInput" placeholder="Введите имя">
-            <button onclick="saveProfile()">Сохранить настройки</button>
-            <button style="background: #21262d; border: 1px solid #30363d;" onclick="closeProfile()">Закрыть</button>
+    <!-- Профиль -->
+    <div class="modal-overlay" id="profileModal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-title">⚙️ Настройки</div>
+            <div class="modal-subtitle">Ваше имя в чате:</div>
+            <input type="text" class="modal-input" id="usernameInput" placeholder="Имя">
+            <button class="modal-btn" style="background: #10b981;" onclick="saveProfile()">Сохранить</button>
+            <button class="modal-btn" style="background: #334155;" onclick="closeProfile()">Закрыть</button>
         </div>
     </div>
 
     <script>
-        const ENDPOINT = 'https://fra.cloud.appwrite.io/v1';
-        const PROJECT_ID = '6aafd937003c8bd02759';
+        const { Client, Databases, ID, Query } = Appwrite;
+        const client = new Client().setEndpoint('https://fra.cloud.appwrite.io/v1').setProject('6aafd937003c8bd02759');
+        const databases = new Databases(client);
+        
         const DATABASE_ID = '6aafdcaa0014b989213e';
         const COLLECTION_ID = '6aafdcfe00022f833302';
 
-        const client = new Appwrite.Client().setEndpoint(ENDPOINT).setProject(PROJECT_ID);
-        const databases = new Appwrite.Databases(client);
+        let currentRoom = localStorage.getItem('st_room') || '';
+        let currentUsername = localStorage.getItem('st_username') || ('User_' + Math.floor(Math.random() * 9000 + 1000));
+        let pollInterval = null;
 
-        let currentRoom = localStorage.getItem('st_active_room') || '';
-        let currentUsername = localStorage.getItem('st_username') || 'User_' + Math.floor(Math.random() * 9000 + 1000);
-        let activeRadioStream = null;
+        // 20 Радиостанций (HTTPS)
+        const radioStreams = {
+            1: { url: 'https://stream.europaplus.ru:8443/ep_live_96.mp3', name: 'Европа Плюс' },
+            2: { url: 'https://chanson.hostingradio.ru:8043/chanson128.mp3', name: 'Шансон' },
+            3: { url: 'https://pub0101.1.fm/deephouse_32k.aac', name: 'Deep House' },
+            4: { url: 'https://radiorecord.hostingradio.ru/rock96.aac', name: 'Рок' },
+            5: { url: 'https://radiorecord.hostingradio.ru/yo96.aac', name: 'Зарубежные' },
+            6: { url: 'https://radiorecord.hostingradio.ru/rr_main96.aac', name: 'Рекорд' },
+            7: { url: 'https://icecast-vgtrk.cdnvideo.ru/vestifm_mp3_192kbps', name: 'Вести FM' },
+            8: { url: 'https://pub0101.1.fm/trance_32k.aac', name: 'Trance' },
+            9: { url: 'https://ep128.hostingradio.ru:8030/ep128', name: 'Энерджи' },
+            10: { url: 'https://dorognoe.hostingradio.ru:8027/dorognoe', name: 'Дорожное' },
+            11: { url: 'https://pub0101.1.fm/top40_32k.aac', name: 'Top 40' },
+            12: { url: 'https://radiorecord.hostingradio.ru/rus96.aac', name: 'Русский Микс' },
+            13: { url: 'https://nashe1.hostingradio.ru/nashe-128.mp3', name: 'Наше Радио' },
+            14: { url: 'https://radiorecord.hostingradio.ru/chillout96.aac', name: 'Chillout' },
+            15: { url: 'https://icecast-vgtrk.cdnvideo.ru/mayakfm_mp3_192kbps', name: 'Маяк' },
+            16: { url: 'https://pub0101.1.fm/90s_32k.aac', name: 'Хиты 90-х' },
+            17: { url: 'https://retro.hostingradio.ru:8043/retro128.mp3', name: 'Ретро FM' },
+            18: { url: 'https://radiorecord.hostingradio.ru/vip96.aac', name: 'Vip House' },
+            19: { url: 'https://avtoradio.hostingradio.ru:8000/avtoradio', name: 'Авторадио' },
+            20: { url: 'https://radiorecord.hostingradio.ru/synth96.aac', name: 'Synthwave' }
+        };
 
-        document.getElementById('modalUsernameInput').value = currentUsername;
+        let currentAudio = null;
+        let activeRadioId = null;
 
-        window.onload = () => {
+        window.onload = function() {
+            document.getElementById('usernameInput').value = currentUsername;
+            renderRadioButtons();
+
             if (!currentRoom) {
-                openRoomAuthModal();
+                openRoomModal();
             } else {
-                document.getElementById('currentRoomText').innerText = currentRoom;
-                initMessenger();
+                document.getElementById('roomBadge').innerText = 'Комната: ' + currentRoom;
+                startChatPolling();
             }
         };
 
-        function openRoomAuthModal() {
-            document.getElementById('roomAuthModal').style.display = 'flex';
-            document.getElementById('authError').style.display = 'none';
-            if (currentRoom) {
-                document.getElementById('authRoomInput').value = currentRoom;
+        function renderRadioButtons() {
+            const bar = document.getElementById('radioBar');
+            for (let i = 1; i <= 20; i++) {
+                const btn = document.createElement('div');
+                btn.className = 'radio-circle';
+                btn.id = `radio-btn-${i}`;
+                btn.innerText = i;
+                btn.title = radioStreams[i].name;
+                btn.onclick = () => toggleRadio(i);
+                bar.appendChild(btn);
             }
         }
 
-        async function verifyAndEnterRoom() {
-            const room = document.getElementById('authRoomInput').value.trim();
-            const pass = document.getElementById('authPassInput').value.trim();
-            const errBox = document.getElementById('authError');
+        function toggleRadio(id) {
+            if (activeRadioId === id && currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+                activeRadioId = null;
+                updateRadioUI(null);
+                return;
+            }
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            const url = radioStreams[id].url;
+            if (!url) return;
+
+            currentAudio = new Audio(url);
+            currentAudio.crossOrigin = "anonymous";
+            currentAudio.play().then(() => {
+                activeRadioId = id;
+                updateRadioUI(id);
+            }).catch(err => {
+                console.error("Ошибка аудио:", err);
+                alert("Поток радиостанции временно недоступен.");
+            });
+        }
+
+        function updateRadioUI(activeId) {
+            for (let i = 1; i <= 20; i++) {
+                const btn = document.getElementById(`radio-btn-${i}`);
+                if (btn) {
+                    if (i === activeId) btn.classList.add('neon-active');
+                    else btn.classList.remove('neon-active');
+                }
+            }
+        }
+
+        function openRoomModal() {
+            document.getElementById('roomModal').style.display = 'flex';
+            document.getElementById('roomError').style.display = 'none';
+            if (currentRoom) document.getElementById('roomInput').value = currentRoom;
+        }
+
+        async function submitRoomAuth() {
+            const room = document.getElementById('roomInput').value.trim();
+            const pass = document.getElementById('roomPasswordInput').value.trim();
+            const errEl = document.getElementById('roomError');
 
             if (!room || !pass) {
-                errBox.innerText = 'Заполните номер комнаты и пароль!';
-                errBox.style.display = 'block';
+                errEl.innerText = 'Заполните номер и пароль!';
+                errEl.style.display = 'block';
                 return;
             }
 
             try {
-                // Загружаем документы из базы для поиска серверного пароля комнаты (маркер AUTH_ROOM_LOCK::<комната>::<пароль>)
+                // Ищем документ-замок комнаты в старом формате "AUTH_ROOM_LOCK::9::777"
                 const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
-                    Appwrite.Query.orderAsc('$createdAt'),
-                    Appwrite.Query.limit(100)
+                    Query.orderAsc('$createdAt'),
+                    Query.limit(100)
                 ]);
 
                 let existingRoomPass = null;
@@ -170,79 +383,97 @@
                 }
 
                 if (existingRoomPass !== null) {
-                    // Комната уже закреплена за паролем на сервере — проверяем точность
                     if (existingRoomPass !== pass) {
-                        errBox.innerText = '❌ Неверный пароль! Отказ в доступе.';
-                        errBox.style.display = 'block';
+                        errEl.innerText = '❌ Неверный пароль! Отказ в доступе.';
+                        errEl.style.display = 'block';
                         return;
                     }
                 } else {
-                    // Комната новая или пустая — записываем постоянный защитный пароль в базу
-                    await databases.createDocument(DATABASE_ID, COLLECTION_ID, Appwrite.ID.unique(), {
+                    await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), {
                         text: `AUTH_ROOM_LOCK::${room}::${pass}`
                     });
                 }
 
                 currentRoom = room;
-                localStorage.setItem('st_active_room', currentRoom);
-                document.getElementById('currentRoomText').innerText = currentRoom;
-                document.getElementById('roomAuthModal').style.display = 'none';
-                errBox.style.display = 'none';
+                localStorage.setItem('st_room', currentRoom);
+                document.getElementById('roomBadge').innerText = 'Комната: ' + currentRoom;
+                document.getElementById('roomModal').style.display = 'none';
                 
-                initMessenger();
-            } catch (e) {
-                errBox.innerText = 'Ошибка связи с базой данных!';
-                errBox.style.display = 'block';
+                if (pollInterval) clearInterval(pollInterval);
+                startChatPolling();
+            } catch (err) {
+                errEl.innerText = 'Ошибка соединения с базой данных';
+                errEl.style.display = 'block';
             }
         }
 
         function exitRoom() {
-            localStorage.removeItem('st_active_room');
+            localStorage.removeItem('st_room');
             currentRoom = '';
-            openRoomAuthModal();
+            document.getElementById('chatContainer').innerHTML = '';
+            document.getElementById('dbStatus').innerText = 'Ожидание...';
+            document.getElementById('roomBadge').innerText = 'Комната: —';
+            if (pollInterval) clearInterval(pollInterval);
+            openRoomModal();
         }
 
-        function openProfile() {
-            document.getElementById('profileModal').style.display = 'flex';
-        }
-
-        function closeProfile() {
-            document.getElementById('profileModal').style.display = 'none';
-        }
-
+        function openProfileModal() { document.getElementById('profileModal').style.display = 'flex'; }
+        function closeProfile() { document.getElementById('profileModal').style.display = 'none'; }
+        
         function saveProfile() {
-            const name = document.getElementById('modalUsernameInput').value.trim();
-            if (name) {
-                currentUsername = name;
+            const val = document.getElementById('usernameInput').value.trim();
+            if (val) {
+                currentUsername = val;
                 localStorage.setItem('st_username', currentUsername);
-                closeProfile();
-                loadMessages();
+            }
+            closeProfile();
+            fetchMessages(); // Перерисовать чат с новым именем (свой/чужой)
+        }
+
+        function handleKeyPress(e) { if (e.key === 'Enter') sendMessage(); }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text || !currentRoom) return;
+
+            const payload = `${currentRoom}::${currentUsername}::${text}`;
+            try {
+                await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), { text: payload });
+                input.value = '';
+                fetchMessages();
+            } catch (err) {
+                console.error("Ошибка отправки:", err);
             }
         }
 
-        async function initMessenger() {
-            document.getElementById('dbStatus').innerText = 'Подключено';
-            loadMessages();
-            setInterval(loadMessages, 3500);
+        async function deleteMessage(docId) {
+            try {
+                await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, docId);
+                fetchMessages();
+            } catch (err) {
+                console.error("Ошибка удаления:", err);
+            }
         }
 
-        async function loadMessages() {
+        async function fetchMessages() {
             if (!currentRoom) return;
             try {
+                document.getElementById('dbStatus').innerText = 'Подключено';
                 const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
-                    Appwrite.Query.orderDesc('$createdAt'),
-                    Appwrite.Query.limit(70)
+                    Query.orderDesc('$createdAt'),
+                    Query.limit(70)
                 ]);
-                
+
                 const container = document.getElementById('chatContainer');
                 container.innerHTML = '';
                 
                 const docs = response.documents.reverse();
+                
                 docs.forEach(doc => {
                     const raw = doc.text || '';
                     const parts = raw.split('::');
                     
-                    // Пропускаем системные пароли комнат
                     if (parts[0] === 'AUTH_ROOM_LOCK' || parts[0] === 'ROOM_AUTH') return;
 
                     if (parts.length >= 3) {
@@ -250,78 +481,37 @@
                         const msgUser = parts[1];
                         const msgText = parts.slice(2).join('::');
 
-                        // Отображаем сообщения только выбранной комнаты
                         if (msgRoom === currentRoom) {
                             const isMy = (msgUser === currentUsername);
+                            const row = document.createElement('div');
+                            row.className = 'message-row ' + (isMy ? 'outgoing' : 'incoming');
+
                             const bubble = document.createElement('div');
-                            bubble.className = `message-bubble ${isMy ? 'my' : 'other'}`;
+                            bubble.className = 'message-bubble';
                             
-                            bubble.innerHTML = `
-                                <span class="msg-user">${escapeHtml(msgUser)}</span>
-                                <div>${escapeHtml(msgText)}</div>
-                                <button class="delete-btn" onclick="deleteMessage('${doc.$id}')" title="Удалить">▲</button>
-                            `;
-                            container.appendChild(bubble);
+                            let contentHtml = `<div class="msg-author">${escapeHtml(msgUser)}</div>`;
+                            contentHtml += `<div class="msg-text">${escapeHtml(msgText)}</div>`;
+                            
+                            if (isMy) {
+                                contentHtml += `<button class="msg-delete" onclick="deleteMessage('${doc.$id}')" title="Удалить">✕</button>`;
+                            }
+                            
+                            bubble.innerHTML = contentHtml;
+                            row.appendChild(bubble);
+                            container.appendChild(row);
                         }
                     }
                 });
                 container.scrollTop = container.scrollHeight;
-            } catch (e) {
-                console.error("Ошибка загрузки сообщений:", e);
+            } catch (err) {
+                document.getElementById('dbStatus').innerText = 'Сбой сети';
             }
         }
 
-        async function sendMessage() {
-            const input = document.getElementById('msgInput');
-            const text = input.value.trim();
-            if (!text || !currentRoom) return;
-
-            const payload = `${currentRoom}::${currentUsername}::${text}`;
-            try {
-                await databases.createDocument(DATABASE_ID, COLLECTION_ID, Appwrite.ID.unique(), {
-                    text: payload
-                });
-                input.value = '';
-                loadMessages();
-            } catch (e) {
-                console.error('Ошибка отправки сообщения: ' + e.message);
-            }
-        }
-
-        async function deleteMessage(id) {
-            try {
-                await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
-                loadMessages();
-            } catch (e) {
-                console.error("Ошибка удаления:", e);
-            }
-        }
-
-        function handleKeyPress(e) {
-            if (e.key === 'Enter') sendMessage();
-        }
-
-        function toggleRadio(id) {
-            document.querySelectorAll('.radio-circle').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            if (activeRadioStream) {
-                activeRadioStream.pause();
-                activeRadioStream = null;
-            }
-
-            const streams = {
-                1: 'https://stream.europaplus.ru:8443/ep_live_96.mp3',      // Европа Плюс
-                2: 'https://chanson.hostingradio.ru:8043/chanson128.mp3',   // Шансон
-                3: 'https://radiorecord.hostingradio.ru/deep96.aac',        // Deep House
-                4: 'https://radiorecord.hostingradio.ru/rock96.aac',        // Рок
-                5: 'https://radiorecord.hostingradio.ru/yo96.aac'           // Зарубежные
-            };
-
-            if (streams[id]) {
-                activeRadioStream = new Audio(streams[id]);
-                activeRadioStream.play().catch(err => console.error('Аудиопоток радио не запущен'));
-            }
+        function startChatPolling() {
+            fetchMessages();
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(fetchMessages, 3500);
         }
 
         function escapeHtml(text) {
